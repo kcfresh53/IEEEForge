@@ -63,11 +63,13 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
 .tgl-cb:checked ~ .tgl-slot{background:#374151;border-color:#374151}
 .tgl-btn{position:absolute;top:2px;left:2px;height:16px;width:16px;border-radius:50%;background:#ffeccf;box-shadow:inset 0 0 0 3px #ffbb52;transform:translateX(26px);transition:transform .5s cubic-bezier(.26,2,.46,.71),background-color .25s,box-shadow .25s;z-index:2}
 .tgl-cb:checked ~ .tgl-slot .tgl-btn{transform:translateX(0);background:#485367;box-shadow:inset 0 0 0 3px #fff}
-.tgl-ico{position:absolute;top:0;height:24px;width:18px;display:flex;align-items:center;justify-content:center;font-size:11px;pointer-events:none;transition:opacity .15s,transform .5s cubic-bezier(.26,2,.46,.71)}
-.tgl-sun{left:4px;opacity:1;transform:rotate(15deg)}
-.tgl-cb:checked ~ .tgl-slot .tgl-sun{opacity:0;transform:rotate(0deg)}
-.tgl-moon{right:4px;opacity:0;transform:rotate(0deg)}
-.tgl-cb:checked ~ .tgl-slot .tgl-moon{opacity:1;transform:rotate(-15deg)}
+/* Icons fill the full inner height (top:0/bottom:0) and flex-center so
+   they sit dead-centre vertically regardless of the slot's border. */
+.tgl-ico{position:absolute;top:0;bottom:0;width:16px;display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;pointer-events:none;transition:opacity .2s}
+.tgl-sun{left:3px;opacity:1}
+.tgl-cb:checked ~ .tgl-slot .tgl-sun{opacity:0}
+.tgl-moon{right:3px;opacity:0}
+.tgl-cb:checked ~ .tgl-slot .tgl-moon{opacity:1}
 [data-tip]{position:relative}
 [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11px;padding:4px 8px;border-radius:var(--rxs);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:500}
 [data-tip]:hover::after{opacity:1}
@@ -584,7 +586,7 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
       <div class="kw-row">
         <span class="kw-lbl">Index Terms</span>
         <div class="kw-box" id="kwBox" onclick="document.getElementById('kwInput').focus()">
-          <input class="kw-input" id="kwInput" placeholder="Add term, press Enter&#8230;" onkeydown="handleKW(event)">
+          <input class="kw-input" id="kwInput" placeholder="Add term, press Enter&#8230;" onkeydown="handleKW(event)" onpaste="handleKWPaste(event)">
         </div>
       </div>
       <div id="sectionsContainer"></div>
@@ -752,6 +754,17 @@ document.addEventListener('focusin',e=>{
 });
 /* Clicking anywhere outside a section hides that section's controls. */
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('.paper-section'))document.querySelectorAll('.paper-section.focused').forEach(s=>s.classList.remove('focused'));});
+/* Paste as plain text inside any editable region: drop the source's
+   formatting (bold, fonts, colours, styles) and adopt the document's
+   own formatting. Keeps native undo/redo intact via execCommand. */
+document.addEventListener('paste',e=>{
+  const sel=window.getSelection();const node=sel&&sel.anchorNode;
+  const host=node&&(node.nodeType===1?node:node.parentElement)?.closest?.('[contenteditable="true"]');
+  if(!host)return; // inputs/textarea paste is already plain text
+  e.preventDefault();
+  const text=(e.clipboardData||window.clipboardData).getData('text/plain')||'';
+  document.execCommand('insertText',false,text);
+});
 function focusEditor(){if(lastEditEl&&document.contains(lastEditEl)){lastEditEl.focus();return true;}const sb=document.querySelector('.sec-body');if(sb){sb.focus();lastEditEl=sb;return true;}return false;}
 function doUndo(){focusEditor();document.execCommand('undo');updateStats();updateCiteNums();}
 function doRedo(){focusEditor();document.execCommand('redo');updateStats();updateCiteNums();}
@@ -775,8 +788,12 @@ function switchTab(n){document.querySelectorAll('.pn-tab').forEach(t=>t.classLis
 function addAuthor(){const id=uid(),list=document.getElementById('authorsList'),div=document.createElement('div');div.className='author-entry';div.id='au-'+id;div.innerHTML=`<div class="author-fields"><div class="p-input" contenteditable="true" data-ph="Given Name Surname" data-au-name></div><div class="p-input" contenteditable="true" data-ph="dept. name of organization" data-au-dept></div><div class="p-input" contenteditable="true" data-ph="name of organization (of Affiliation)" data-au-org></div><div class="p-input" contenteditable="true" data-ph="City, Country" data-au-city></div><div class="p-input" contenteditable="true" data-ph="email address or ORCID" data-au-email></div></div><button class="btn-icon" onclick="removeAuthor('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;list.appendChild(div);}
 function removeAuthor(id){const el=document.getElementById('au-'+id);if(el&&document.getElementById('authorsList').children.length>1)el.remove();}
 
-function handleKW(e){const inp=document.getElementById('kwInput');if(e.key==='Enter'||e.key===','){e.preventDefault();const v=inp.value.replace(/,$/,'').trim();if(v&&!keywords.includes(v)){keywords.push(v);renderKW();}inp.value='';}else if(e.key==='Backspace'&&inp.value===''&&keywords.length>0){keywords.pop();renderKW();}}
-function removeKW(v){const i=keywords.indexOf(v);if(i>-1){keywords.splice(i,1);renderKW();}}
+/* Add one or many terms at once (splitting on commas/semicolons/newlines),
+   de-duplicating, then clear the field and refocus it for fast entry. */
+function addKeywords(str){let added=0;String(str).split(/[,;\n\r]+/).map(s=>s.trim()).filter(Boolean).forEach(v=>{if(!keywords.includes(v)){keywords.push(v);added++;}});renderKW();const inp=document.getElementById('kwInput');if(inp){inp.value='';inp.focus();}return added;}
+function handleKW(e){const inp=document.getElementById('kwInput');if(e.key==='Enter'||e.key===','){e.preventDefault();addKeywords(inp.value);}else if(e.key==='Backspace'&&inp.value===''&&keywords.length>0){keywords.pop();renderKW();inp.focus();}}
+function handleKWPaste(e){e.preventDefault();const text=(e.clipboardData||window.clipboardData).getData('text/plain')||'';addKeywords(text);}
+function removeKW(v){const i=keywords.indexOf(v);if(i>-1){keywords.splice(i,1);renderKW();}const inp=document.getElementById('kwInput');if(inp)inp.focus();}
 function renderKW(){const box=document.getElementById('kwBox'),inp=document.getElementById('kwInput');box.innerHTML='';keywords.forEach(k=>{const t=document.createElement('span');t.className='kw-tag';t.innerHTML=`${k}<button class="kw-x" onclick="removeKW('${k.replace(/'/g,"\\'")}')">&#10005;</button>`;box.appendChild(t);});box.appendChild(inp);}
 
 let sectionCount=0;
