@@ -55,12 +55,19 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
 .tb-btn svg{width:15px;height:15px;flex-shrink:0}.tb-btn span{font-size:var(--txs)}.tb-spacer{flex:1}
 .tb-export{padding:6px 14px;font-size:var(--tsm);font-weight:600;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:var(--rsm);color:#010f13;box-shadow:var(--sh0);transition:opacity .12s,transform .12s;white-space:nowrap}
 .tb-export:hover{opacity:.9;transform:translateY(-1px);box-shadow:var(--sh1)}
-.theme-toggle{display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--rfull);background:var(--s2);transition:border-color .15s;cursor:pointer}
-.theme-toggle:hover{border-color:var(--primary)}
-.tog-track{width:32px;height:18px;background:var(--brd);border-radius:var(--rfull);position:relative;transition:background .2s}
-[data-theme=dark] .tog-track{background:var(--primary)}
-.tog-thumb{width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;box-shadow:var(--sh0);transition:transform .2s}
-[data-theme=dark] .tog-thumb{transform:translateX(14px)}.tog-icon{font-size:13px}
+/* Animated sun/moon theme toggle (single slider, embedded icons).
+   Unchecked = light (sun shown, knob right); checked = dark (moon shown, knob left). */
+.tgl{cursor:pointer;display:inline-flex;align-items:center;line-height:0}
+.tgl-cb{position:absolute;opacity:0;width:0;height:0}
+.tgl-slot{position:relative;display:block;height:24px;width:50px;border:2px solid var(--brd);border-radius:9999px;background:#eef1f5;transition:background-color .25s,border-color .25s}
+.tgl-cb:checked ~ .tgl-slot{background:#374151;border-color:#374151}
+.tgl-btn{position:absolute;top:2px;left:2px;height:16px;width:16px;border-radius:50%;background:#ffeccf;box-shadow:inset 0 0 0 3px #ffbb52;transform:translateX(26px);transition:transform .5s cubic-bezier(.26,2,.46,.71),background-color .25s,box-shadow .25s;z-index:2}
+.tgl-cb:checked ~ .tgl-slot .tgl-btn{transform:translateX(0);background:#485367;box-shadow:inset 0 0 0 3px #fff}
+.tgl-ico{position:absolute;top:0;height:24px;width:18px;display:flex;align-items:center;justify-content:center;font-size:11px;pointer-events:none;transition:opacity .15s,transform .5s cubic-bezier(.26,2,.46,.71)}
+.tgl-sun{left:4px;opacity:1;transform:rotate(15deg)}
+.tgl-cb:checked ~ .tgl-slot .tgl-sun{opacity:0;transform:rotate(0deg)}
+.tgl-moon{right:4px;opacity:0;transform:rotate(0deg)}
+.tgl-cb:checked ~ .tgl-slot .tgl-moon{opacity:1;transform:rotate(-15deg)}
 [data-tip]{position:relative}
 [data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11px;padding:4px 8px;border-radius:var(--rxs);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:500}
 [data-tip]:hover::after{opacity:1}
@@ -134,20 +141,28 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
 }
 .paper-title-ta::placeholder{opacity:.2;font-style:italic}
 .paper-title-ta:hover,.paper-title-ta:focus{outline:1px dashed rgba(21,211,249,.5);outline-offset:2px}
-.authors-area{margin-top:12px}
-.authors-list{display:flex;flex-direction:column;gap:4px}
-.author-entry{display:flex;gap:6px;align-items:flex-start}
-.author-fields{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3px}
-.author-fields .full{grid-column:1/-1}
+/* Author block — each author is a centered vertical stack; authors sit
+   side-by-side and wrap, exactly like the IEEE template. */
+.authors-area{margin-top:14px}
+.authors-list{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:6px 30px}
+.author-entry{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;min-width:150px;max-width:210px;padding-top:2px}
+.author-fields{display:flex;flex-direction:column;align-items:stretch;gap:0;width:100%}
+.author-entry>.btn-icon{position:absolute;top:-8px;right:-8px;opacity:0}
+.author-entry:hover>.btn-icon{opacity:.7}
+/* Author fields are contenteditable so long emails / department names
+   wrap onto multiple lines instead of being clipped. */
 .p-input{
-  padding:3px 4px;border:1px dashed transparent;border-radius:2px;
+  padding:1px 3px;border:1px dashed transparent;border-radius:2px;
   background:transparent;color:#000;font-family:'Times New Roman',Times,serif;
-  font-size:10pt;outline:none;width:100%;text-align:center;transition:border-color .12s,background .12s;
+  font-size:10pt;line-height:1.25;outline:none;width:100%;text-align:center;
+  white-space:normal;overflow-wrap:anywhere;word-break:break-word;min-height:1.3em;
+  transition:border-color .12s,background .12s;
 }
 .p-input:hover{border-color:rgba(21,211,249,.45)}
 .p-input:focus{border-color:var(--primary);background:rgba(255,255,255,.9)}
-.p-input[data-au-affil],.p-input[data-au-email]{font-style:italic}
-.p-input::placeholder{opacity:.22;font-style:italic}
+.p-input[data-au-name]{font-style:normal;font-weight:normal}
+.p-input[data-au-dept],.p-input[data-au-org],.p-input[data-au-city],.p-input[data-au-email]{font-style:italic}
+.p-input:empty::before{content:attr(data-ph);opacity:.22;font-style:italic;pointer-events:none}
 .btn-icon{width:24px;height:24px;border:none;background:var(--s2);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;color:var(--text);opacity:.5;transition:all .12s;flex-shrink:0}
 .btn-icon:hover{opacity:1;background:var(--acc-dim);color:var(--accent)}.btn-icon svg{width:11px;height:11px}
 .add-author-btn{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:8px;padding:5px 12px;border:1px dashed var(--border);background:transparent;color:var(--text);opacity:.5;border-radius:var(--rsm);font-family:var(--fb);font-size:var(--txs);font-weight:500;transition:all .12s;width:100%}
@@ -202,13 +217,17 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
 .paper-section{margin-bottom:0;position:relative}
 .sec-ctrls{position:absolute;right:-44px;top:2px;display:none;gap:2px;flex-direction:column}
 .paper-section:hover .sec-ctrls{display:flex}
-.sec-hdr{display:flex;align-items:baseline;justify-content:center;gap:4px;margin-top:12pt;margin-bottom:6pt;text-indent:0}
-.sec-num{font-family:'Times New Roman',Times,serif;font-size:10pt;font-weight:bold;font-variant:small-caps;color:#000;flex-shrink:0}
+/* IEEE Heading 1: the whole heading spans the column width; the Roman
+   numeral sits flush-left while the title is centered across the column
+   (the numeral is offset by Word's list tab — replicated with absolute
+   positioning here). Small-caps, bold. */
+.sec-hdr{position:relative;display:block;text-align:center;margin:12pt 0 6pt;text-indent:0;min-height:14pt}
+.sec-num{position:absolute;left:0;top:0;font-family:'Times New Roman',Times,serif;font-size:10pt;font-weight:bold;font-variant:small-caps;color:#000}
 .sec-title-in{
+  display:block;width:100%;
   font-family:'Times New Roman',Times,serif;font-size:10pt;font-weight:bold;
   font-variant:small-caps;text-align:center;color:#000;
   border:none;background:transparent;outline:none;padding:0;
-  flex:0 1 auto;min-width:60px;max-width:560px;
 }
 .sec-title-in::placeholder{font-variant:normal;font-weight:400;opacity:.22;text-transform:none}
 .sec-title-in:hover,.sec-title-in:focus{outline:1px dashed rgba(21,211,249,.45);outline-offset:2px}
@@ -278,15 +297,23 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
 .ieee-tbl-wrap.span2{column-span:all;-webkit-column-span:all}
 .ieee-tbl-cap{font-family:'Times New Roman',Times,serif;font-size:8pt;font-variant:small-caps;font-weight:bold;text-align:center;margin-bottom:4pt;outline:none;color:#000}
 .ieee-tbl-cap:hover,.ieee-tbl-cap:focus{outline:1px dashed rgba(21,211,249,.35)}
-.ieee-tbl{width:100%;border-collapse:collapse;font-family:'Times New Roman',Times,serif;font-size:8pt;color:#000}
-.ieee-tbl thead tr{border-top:1.5pt solid #000;border-bottom:.75pt solid #000}
-.ieee-tbl tbody tr:last-child{border-bottom:1.5pt solid #000}
-.ieee-tbl th{padding:2pt 8pt;font-weight:bold;text-align:center;background:transparent;border:none}
-.ieee-tbl td{padding:2pt 8pt;border:none}
+/* Single-section table (all rows in <tbody>) so cells can merge freely
+   in any direction — headers are just <th> (bold), not a structural
+   barrier. IEEE 3-rule look: top & bottom rules on the table, a thin
+   rule beneath any header cell. */
+.ieee-tbl{width:100%;border-collapse:collapse;font-family:'Times New Roman',Times,serif;font-size:8pt;color:#000;border-top:1.5pt solid #000;border-bottom:1.5pt solid #000}
+.ieee-tbl th{padding:2pt 8pt;font-weight:bold;font-style:normal;text-align:center;background:transparent;border-bottom:.75pt solid #000;vertical-align:middle}
+.ieee-tbl td{padding:2pt 8pt;border:none;text-align:center;vertical-align:middle}
+.ieee-tbl td:empty::after,.ieee-tbl th:empty::after{content:'\00a0'}
 
-/* ── EQUATION ── */
-.ieee-eq{display:flex;align-items:center;gap:12px;margin:6pt 0;break-inside:avoid;-webkit-column-break-inside:avoid}
-.ieee-eq-content{flex:1;text-align:center}
+/* ── EQUATION ──
+   Centered equation with the number directly BELOW it (centered).
+   KaTeX's display margins are removed so the box hugs the math. */
+.ieee-eq{display:flex;flex-direction:column;align-items:center;gap:2px;margin:6pt 0;break-inside:avoid;-webkit-column-break-inside:avoid}
+.ieee-eq-content{text-align:center;min-width:0}
+.ieee-eq-content .katex-display{margin:0;padding:0}
+.ieee-eq-content .katex-display>.katex{text-align:center}
+.ieee-eq-content .katex{font-size:1.05em}
 .ieee-eq-num{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;white-space:nowrap}
 
 /* ── REFERENCES ──
@@ -373,6 +400,13 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
 .chart-type-btn:hover{background:var(--s2)}.chart-type-btn.on{background:var(--pri-dim);border-color:var(--primary);color:var(--primary)}
 .inline-tb{position:fixed;display:none;gap:1px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:3px;box-shadow:var(--sh2);z-index:500}
 .inline-tb.show{display:flex}.inline-tb .tb-btn{padding:4px 7px;font-size:var(--txs)}
+/* Table editing toolbar */
+.tbl-tb{position:fixed;display:none;gap:2px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:4px;box-shadow:var(--sh2);z-index:600}
+.tbl-tb.show{display:flex}
+.tbl-tb-btn{padding:4px 8px;border:none;background:transparent;color:var(--text);border-radius:var(--rxs);font-family:var(--fb);font-size:var(--txs);font-weight:500;white-space:nowrap;transition:background .12s}
+.tbl-tb-btn:hover{background:var(--pri-dim);color:var(--primary)}
+.tbl-tb-div{width:1px;height:18px;background:var(--border);margin:0 2px}
+.ieee-tbl td.tbl-active,.ieee-tbl th.tbl-active{outline:2px solid var(--primary);outline-offset:-2px;background:rgba(21,211,249,.08)}
 .toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:2000}
 .toast{padding:9px 16px;background:var(--surface);border-radius:var(--rlg);box-shadow:var(--sh3);border-left:3px solid var(--primary);font-size:var(--tsm);font-weight:500;color:var(--text);transform:translateX(120%);transition:transform .28s;min-width:180px}
 .toast.show{transform:translateX(0)}.toast.err{border-color:var(--accent)}.toast.inf{border-color:var(--secondary)}
@@ -399,10 +433,14 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
   /* Title block */
   .paper-hdr{background:#fff!important;padding:0 0 10pt!important;border-bottom:none!important;text-align:center}
   .paper-title-ta{font-size:24pt!important;font-weight:400!important;color:#000!important;background:#fff!important;border:none!important;outline:none!important;text-align:center}
-  .author-entry{display:block!important;text-align:center;margin-bottom:2pt}
-  .author-fields{display:block!important}
-  .p-input{border:none!important;background:none!important;outline:none!important;padding:0 2pt!important;font-family:'Times New Roman',serif!important;color:#000!important;font-size:9pt!important;display:inline!important;width:auto!important;box-shadow:none!important;text-align:center}
-  .p-input[data-au-affil],.p-input[data-au-email]{display:block!important;font-style:italic;font-size:9pt!important}
+  .authors-list{display:flex!important;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:4pt 24pt!important}
+  .author-entry{display:flex!important;flex-direction:column;align-items:center;text-align:center;margin:0 0 4pt;min-width:0!important}
+  .author-fields{display:flex!important;flex-direction:column}
+  .p-input{border:none!important;background:none!important;outline:none!important;padding:0!important;font-family:'Times New Roman',serif!important;color:#000!important;font-size:10pt!important;line-height:1.2!important;display:block!important;width:auto!important;box-shadow:none!important;text-align:center}
+  .p-input[data-au-name]{font-style:normal!important}
+  .p-input[data-au-dept],.p-input[data-au-org],.p-input[data-au-city],.p-input[data-au-email]{font-style:italic!important;font-size:10pt!important}
+  .p-input:empty{display:none!important}
+  .p-input:empty::before{content:none!important}
   /* Two-column body — IEEE: two columns, 0.25in gutter */
   .paper-body{padding:8pt 0 0!important;column-count:2;column-gap:.25in;background:#fff!important}
   /* Abstract: flows in column 1 (NOT full-width), 9pt BOLD per IEEE */
@@ -419,7 +457,9 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
   /* Sections flow across columns/pages; only floats are kept intact */
   .paper-section{break-inside:auto}
   .ieee-fig.span2,.ieee-tbl-wrap.span2{column-span:all!important;width:100%!important}
-  .sec-hdr{margin-top:10pt!important;margin-bottom:4pt!important;text-indent:0!important}
+  .sec-hdr{position:relative!important;display:block!important;text-align:center!important;margin:10pt 0 4pt!important;text-indent:0!important}
+  .sec-num{position:absolute!important;left:0!important;top:0!important}
+  .sec-title-in{display:block!important;width:100%!important;text-align:center!important;padding:0!important}
   .sec-num,.sec-title-in{font-family:'Times New Roman',serif!important;color:#000!important;font-size:10pt!important;font-weight:bold!important;font-variant:small-caps!important;text-transform:none!important;border:none!important;background:none!important;outline:none!important}
   .sec-body{font-family:'Times New Roman',serif!important;font-size:10pt!important;color:#000!important;line-height:1.25!important;text-align:justify!important;text-indent:0.2in!important;border:none!important;padding:0!important}
   .sec-body>p,.sec-body>div:not([class]){text-indent:0.2in!important;margin-bottom:6pt!important}
@@ -434,9 +474,12 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
   /* Tables */
   .ieee-tbl-wrap{break-inside:avoid}
   .ieee-tbl-cap{font-variant:small-caps!important;font-weight:bold!important;font-size:8pt!important;color:#000!important;border:none!important}
-  .ieee-tbl th,.ieee-tbl td{font-size:8pt!important;color:#000!important}
+  .ieee-tbl{border-top:1.5pt solid #000!important;border-bottom:1.5pt solid #000!important}
+  .ieee-tbl th{font-size:8pt!important;color:#000!important;font-weight:bold!important;border-bottom:.75pt solid #000!important}
+  .ieee-tbl td{font-size:8pt!important;color:#000!important;border:none!important}
   /* Equations */
   .ieee-eq{margin:4pt 0!important}
+  .ieee-eq-content .katex-display{margin:0!important;padding:0!important}
   .ieee-eq-num{color:#000!important;font-size:10pt!important}
   /* References: flow in the two columns, 8pt (IEEE does not span these) */
   .refs-section{border-top:none!important;margin-top:8pt!important;padding-top:0!important}
@@ -480,7 +523,14 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
   <div class="tb-spacer"></div>
   <span style="font-size:var(--txs);opacity:.5;white-space:nowrap" id="wcDisplay">0 words</span>
   <div class="tb-div"></div>
-  <button class="theme-toggle" onclick="toggleTheme()" data-tip="Toggle dark mode"><span class="tog-icon" id="themeIcon">&#9728;&#65039;</span><div class="tog-track"><div class="tog-thumb"></div></div><span class="tog-icon">&#127769;</span></button>
+  <label class="tgl" data-tip="Toggle dark mode">
+    <input class="tgl-cb" id="themeCb" type="checkbox" onchange="toggleTheme()">
+    <span class="tgl-slot">
+      <span class="tgl-ico tgl-sun">&#9728;&#65039;</span>
+      <span class="tgl-ico tgl-moon">&#127769;</span>
+      <span class="tgl-btn"></span>
+    </span>
+  </label>
   <div class="tb-div"></div>
   <button class="tb-btn" onclick="exportHTML()" data-tip="Save HTML (Ctrl+S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save</button>
   <button class="tb-export" onclick="exportPDF()">&#128196; PDF Export</button>
@@ -568,6 +618,19 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
   <button class="tb-btn" onclick="fmt('superscript')" style="font-size:10px">x&sup2;</button>
   <button class="tb-btn" onclick="fmt('subscript')" style="font-size:10px">x&#8322;</button>
   <button class="tb-btn" onclick="openCitePicker()" style="font-size:11px;font-weight:700">[n]</button>
+</div>
+<!-- Table editing toolbar -->
+<div class="tbl-tb" id="tblTb">
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblMerge('right')" data-tip="Merge with cell to the right">Merge &#8594;</button>
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblMerge('down')" data-tip="Merge with cell below">Merge &#8595;</button>
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblSplit()" data-tip="Split merged cell">Split</button>
+  <span class="tbl-tb-div"></span>
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblRowAdd()" data-tip="Insert row below">+Row</button>
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblColAdd()" data-tip="Insert column to the right">+Col</button>
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblRowDel()" data-tip="Delete this row">&minus;Row</button>
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblColDel()" data-tip="Delete this column">&minus;Col</button>
+  <span class="tbl-tb-div"></span>
+  <button class="tbl-tb-btn" onmousedown="event.preventDefault()" onclick="tblToggleHeader()" data-tip="Toggle header cell">Head</button>
 </div>
 <!-- REFERENCE MODAL -->
 <div class="modal-ov" id="refModal"><div class="modal">
@@ -664,6 +727,7 @@ let currentChartType='bar',chartPreviewTimer=null,chartInstance=null;
 
 document.addEventListener('DOMContentLoaded',()=>{
   if(window.__SAVED_STATE__){const ss=window.__SAVED_STATE__;if(ss.theme)document.documentElement.setAttribute('data-theme',ss.theme);if(ss.refs){S.refs=ss.refs;renderRefs();}if(ss.figs){S.figs=ss.figs;renderFigsPanel();}if(ss.keywords)ss.keywords.forEach(k=>keywords.push(k));renderKW();updateCiteNums();}
+  {const cb=document.getElementById('themeCb');if(cb)cb.checked=document.documentElement.getAttribute('data-theme')==='dark';}
   if(!document.querySelector('.paper-section')){['Introduction','Related Work','Methodology','Results and Discussion','Conclusion'].forEach(t=>addSection(t));}
   else{document.querySelectorAll('.paper-section').forEach(s=>{sectionCount=Math.max(sectionCount,parseInt(s.dataset.sn||0));});}
   addAuthor();updateOutline();updateStats();updateRefFields();
@@ -673,11 +737,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   setInterval(updateStats,3000);
 });
 
-function toggleTheme(){const h=document.documentElement,dark=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',dark?'light':'dark');document.getElementById('themeIcon').textContent=dark?'\u2600\uFE0F':'\uD83C\uDF19';}
+function toggleTheme(){const h=document.documentElement,next=h.getAttribute('data-theme')==='dark'?'light':'dark';h.setAttribute('data-theme',next);const cb=document.getElementById('themeCb');if(cb)cb.checked=(next==='dark');}
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('closed');}
 function switchTab(n){document.querySelectorAll('.pn-tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.pn-tabpane').forEach(p=>p.classList.remove('on'));document.getElementById('ptab-'+n).classList.add('on');document.getElementById('pane-'+n).classList.add('on');}
 
-function addAuthor(){const id=uid(),list=document.getElementById('authorsList'),div=document.createElement('div');div.className='author-entry';div.id='au-'+id;div.innerHTML=`<div class="author-fields"><input class="p-input" placeholder="Given Name Surname" data-au-first><input class="p-input" placeholder="Second B. Author" data-au-last><input class="p-input full" placeholder="dept. name, Institution, City, Country" data-au-affil><input class="p-input full" placeholder="email@example.com or ORCID" data-au-email></div><button class="btn-icon" onclick="removeAuthor('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;list.appendChild(div);}
+function addAuthor(){const id=uid(),list=document.getElementById('authorsList'),div=document.createElement('div');div.className='author-entry';div.id='au-'+id;div.innerHTML=`<div class="author-fields"><div class="p-input" contenteditable="true" data-ph="Given Name Surname" data-au-name></div><div class="p-input" contenteditable="true" data-ph="dept. name of organization" data-au-dept></div><div class="p-input" contenteditable="true" data-ph="name of organization (of Affiliation)" data-au-org></div><div class="p-input" contenteditable="true" data-ph="City, Country" data-au-city></div><div class="p-input" contenteditable="true" data-ph="email address or ORCID" data-au-email></div></div><button class="btn-icon" onclick="removeAuthor('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;list.appendChild(div);}
 function removeAuthor(id){const el=document.getElementById('au-'+id);if(el&&document.getElementById('authorsList').children.length>1)el.remove();}
 
 function handleKW(e){const inp=document.getElementById('kwInput');if(e.key==='Enter'||e.key===','){e.preventDefault();const v=inp.value.replace(/,$/,'').trim();if(v&&!keywords.includes(v)){keywords.push(v);renderKW();}inp.value='';}else if(e.key==='Backspace'&&inp.value===''&&keywords.length>0){keywords.pop();renderKW();}}
@@ -799,7 +863,26 @@ function insertFig(){if(!pendingFigSrc)return;doInsertFigSrc(pendingFigSrc,docum
 function renderFigsPanel(){const panel=document.getElementById('figCards');panel.innerHTML='';if(!S.figs.length){panel.innerHTML='<div class="empty-st"><div class="empty-st-icon">&#128444;&#65039;</div><div class="empty-st-txt">No figures yet.</div></div>';return;}S.figs.forEach(fig=>{const c=document.createElement('div');c.className='fig-card';c.innerHTML=`<img src="${fig.src}" alt="${fig.label}"><div class="fig-card-b"><div class="fig-card-lbl">${fig.label}</div><div class="fig-card-cap">${fig.caption||'No caption'}</div></div>`;panel.appendChild(c);});}
 
 function openTableModal(){saveRange();openModal('tableModal');}
-function insertTable(){const rows=parseInt(document.getElementById('tblRows').value)||3,cols=parseInt(document.getElementById('tblCols').value)||3;const cap=document.getElementById('tblCaption').value.trim(),hStr=document.getElementById('tblHeaders').value.trim();const headers=hStr?hStr.split(',').map(h=>h.trim()):[];S.tableCount++;const lbl='Table '+toRoman(S.tableCount);const ths=Array.from({length:cols},(_,i)=>`<th contenteditable="true">${headers[i]||'Column '+(i+1)}</th>`).join('');const tds=Array.from({length:cols},()=>'<td contenteditable="true">&#8212;</td>').join('');const trows=Array.from({length:rows},()=>`<tr>${tds}</tr>`).join('');const html=`<div class="ieee-tbl-wrap" contenteditable="false"><div class="ieee-tbl-cap" contenteditable="true">${lbl}${cap?'. '+cap:''}</div><table class="ieee-tbl"><thead><tr>${ths}</tr></thead><tbody>${trows}</tbody></table></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}closeModal('tableModal');toast(`${lbl} inserted!`);}
+function insertTable(){const rows=parseInt(document.getElementById('tblRows').value)||3,cols=parseInt(document.getElementById('tblCols').value)||3;const cap=document.getElementById('tblCaption').value.trim(),hStr=document.getElementById('tblHeaders').value.trim();const headers=hStr?hStr.split(',').map(h=>h.trim()):[];S.tableCount++;const lbl='Table '+toRoman(S.tableCount);const ths=Array.from({length:cols},(_,i)=>`<th contenteditable="true">${headers[i]||'Column '+(i+1)}</th>`).join('');const tds=Array.from({length:cols},()=>'<td contenteditable="true">&#8212;</td>').join('');const trows=Array.from({length:rows},()=>`<tr>${tds}</tr>`).join('');const html=`<div class="ieee-tbl-wrap" contenteditable="false"><div class="ieee-tbl-cap" contenteditable="true">${lbl}${cap?'. '+cap:''}</div><table class="ieee-tbl"><tbody><tr>${ths}</tr>${trows}</tbody></table></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}closeModal('tableModal');toast(`${lbl} inserted!`);}
+
+/* ===== TABLE EDITING (merge / split / add / delete cells) ===== */
+let tblCell=null;
+const TBL_PH='—';
+function tblMk(tag){const el=document.createElement(tag);el.contentEditable='true';el.innerHTML=TBL_PH;return el;}
+/* Build a column-accurate grid; stamp anchor coords/spans on each cell. */
+function tblBuildGrid(table){const grid=[];[...table.rows].forEach((row,r)=>{if(!grid[r])grid[r]=[];let c=0;[...row.cells].forEach(cell=>{while(grid[r][c]!==undefined)c++;const cs=cell.colSpan||1,rs=cell.rowSpan||1;for(let i=0;i<rs;i++){if(!grid[r+i])grid[r+i]=[];for(let j=0;j<cs;j++)grid[r+i][c+j]=cell;}cell._r=r;cell._c=c;cell._rs=rs;cell._cs=cs;c+=cs;});});return grid;}
+function tblCombine(a,b){const bt=(b.textContent||'').trim();if(bt&&bt!==TBL_PH){const at=(a.textContent||'').trim();a.innerHTML=(at&&at!==TBL_PH)?a.innerHTML+' '+b.innerHTML:b.innerHTML;}}
+function showTblTb(cell){tblCell=cell;document.querySelectorAll('.ieee-tbl .tbl-active').forEach(c=>c.classList.remove('tbl-active'));cell.classList.add('tbl-active');const tb=document.getElementById('tblTb');tb.classList.add('show');const r=cell.getBoundingClientRect(),tbr=tb.getBoundingClientRect();let top=r.top-tbr.height-6;if(top<6)top=r.bottom+6;let left=r.left,maxL=window.innerWidth-tbr.width-8;if(left>maxL)left=maxL;if(left<8)left=8;tb.style.top=top+'px';tb.style.left=left+'px';}
+function hideTblTb(){document.getElementById('tblTb').classList.remove('show');document.querySelectorAll('.ieee-tbl .tbl-active').forEach(c=>c.classList.remove('tbl-active'));tblCell=null;}
+function tblMerge(dir){if(!tblCell)return;const table=tblCell.closest('.ieee-tbl');tblBuildGrid(table);const {_r:r,_c:c,_rs:rs,_cs:cs}=tblCell;if(dir==='right'){const g=tblBuildGrid(table);const t=g[r]&&g[r][c+cs];if(!t||t===tblCell||t._r!==r||t._rs!==rs){toast('No aligned cell to the right.','err');return;}tblCombine(tblCell,t);tblCell.colSpan=cs+t._cs;t.remove();}else{const g=tblBuildGrid(table);const t=g[r+rs]&&g[r+rs][c];if(!t||t===tblCell||t._c!==c||t._cs!==cs){toast('No aligned cell below.','err');return;}tblCombine(tblCell,t);tblCell.rowSpan=rs+t._rs;t.remove();}showTblTb(tblCell);toast('Cells merged.');}
+function tblSplit(){if(!tblCell)return;const table=tblCell.closest('.ieee-tbl');tblBuildGrid(table);const {_r:r,_c:c,_rs:rs,_cs:cs}=tblCell;if(cs===1&&rs===1){toast('Cell is not merged.','inf');return;}const tag=tblCell.tagName.toLowerCase(),right=c+cs;for(let i=0;i<rs;i++){const row=table.rows[r+i];if(!row)continue;let before=null,best=Infinity;[...row.cells].forEach(cell=>{if(cell!==tblCell&&typeof cell._c==='number'&&cell._c>=right&&cell._c<best){best=cell._c;before=cell;}});const count=(i===0)?cs-1:cs;for(let j=0;j<count;j++){const el=tblMk(tag);before?row.insertBefore(el,before):row.appendChild(el);}}tblCell.colSpan=1;tblCell.rowSpan=1;hideTblTb();toast('Cell split.');}
+function tblRowAdd(){if(!tblCell)return;const table=tblCell.closest('.ieee-tbl'),grid=tblBuildGrid(table);const cols=Math.max(...grid.map(r=>r.length));const ref=table.rows[tblCell._r+tblCell._rs-1];const isHead=ref.parentNode.tagName==='THEAD';const tr=document.createElement('tr');for(let j=0;j<cols;j++)tr.appendChild(tblMk(isHead?'th':'td'));ref.parentNode.insertBefore(tr,ref.nextSibling);toast('Row added.');}
+function tblColAdd(){if(!tblCell)return;const table=tblCell.closest('.ieee-tbl');[...table.rows].forEach(row=>{const tag=row.cells[0]&&row.cells[0].tagName==='TH'?'th':'td';row.appendChild(tblMk(tag));});toast('Column added.');}
+function tblRowDel(){if(!tblCell)return;const table=tblCell.closest('.ieee-tbl');if(table.rows.length<=1){toast('Cannot delete the last row.','err');return;}tblCell.parentNode.remove();hideTblTb();toast('Row deleted.');}
+function tblColDel(){if(!tblCell)return;const table=tblCell.closest('.ieee-tbl'),grid=tblBuildGrid(table);const cols=Math.max(...grid.map(r=>r.length));if(cols<=1){toast('Cannot delete the last column.','err');return;}const c=tblCell._c,seen=new Set();grid.forEach(rowArr=>{const cell=rowArr[c];if(!cell||seen.has(cell))return;seen.add(cell);if((cell._cs||1)>1)cell.colSpan=cell._cs-1;else cell.remove();});hideTblTb();toast('Column deleted.');}
+function tblToggleHeader(){if(!tblCell)return;const cur=tblCell,tag=cur.tagName==='TH'?'td':'th',el=document.createElement(tag);el.contentEditable='true';el.innerHTML=cur.innerHTML;if(cur.colSpan>1)el.colSpan=cur.colSpan;if(cur.rowSpan>1)el.rowSpan=cur.rowSpan;cur.replaceWith(el);showTblTb(el);}
+document.addEventListener('click',e=>{const cell=e.target.closest('.ieee-tbl td,.ieee-tbl th');if(cell)showTblTb(cell);else if(!e.target.closest('#tblTb'))hideTblTb();});
+document.addEventListener('keydown',e=>{if(e.key==='Escape')hideTblTb();});
 
 function openEqModal(){saveRange();document.getElementById('eqInput').value='';document.getElementById('eqPreview').innerHTML='';document.getElementById('eqLabel').value='';openModal('eqModal');}
 function previewEq(){const latex=document.getElementById('eqInput').value.trim(),prev=document.getElementById('eqPreview');if(!latex){prev.innerHTML='';return;}try{prev.innerHTML=window.katex?window.katex.renderToString(latex,{throwOnError:false,displayMode:true}):`<em>${latex}</em>`;}catch(e){prev.innerHTML='<span style="color:var(--accent)">Invalid LaTeX</span>';}}
