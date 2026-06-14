@@ -545,7 +545,8 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
     </span>
   </label>
   <div class="tb-div"></div>
-  <button class="tb-btn" onclick="exportHTML()" data-tip="Save HTML (Ctrl+S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save</button>
+  <button class="tb-btn" onclick="openIEF()" data-tip="Open project (.ief)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>Open</button>
+  <button class="tb-btn" onclick="saveIEF()" data-tip="Save project (.ief) — Ctrl+S"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>Save</button>
   <button class="tb-export" onclick="exportPDF()">&#128196; PDF Export</button>
 </header>
 <div class="workspace">
@@ -609,8 +610,9 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
     </div>
     <div class="pn-tabpane" id="pane-figures"><div class="fig-cards" id="figCards"><div class="empty-st"><div class="empty-st-icon">&#128444;&#65039;</div><div class="empty-st-txt">No figures yet.</div></div></div></div>
     <div class="pn-tabpane" id="pane-export">
+      <div class="exp-card"><div class="sb-label">Project File (.ief)</div><p>Save your work as a structured <em>.ief</em> file and reopen it later to continue exactly where you left off.</p><button class="btn-pri full" onclick="saveIEF()" style="margin-bottom:7px">&#128190; Save Project</button><button class="btn-sec full" onclick="openIEF()">&#128193; Open Project</button></div>
       <div class="exp-card"><div class="sb-label">PDF Export</div><p>Exports as IEEE two-column (Times New Roman 10pt body, 8pt refs, 0.75&#8221;/0.625&#8221; margins). Choose <em>Save as PDF</em>.</p><button class="btn-pri full" onclick="exportPDF()">&#128196; Export PDF</button></div>
-      <div class="exp-card"><div class="sb-label">Save HTML</div><p>Portable file preserving all content, references, and figures.</p><button class="btn-sec full" onclick="exportHTML()">&#128190; Save HTML</button></div>
+      <div class="exp-card"><div class="sb-label">Export HTML</div><p>A read-only standalone HTML copy (not re-editable). For sharing a preview &#8212; use a <em>.ief</em> file to keep editing.</p><button class="btn-sec full" onclick="exportHTML()">&#128190; Export HTML</button></div>
       <div class="exp-card"><div class="sb-label">Copy References</div><p>All IEEE-formatted references (appearance order) to clipboard.</p><button class="btn-sec full" onclick="copyRefs()">&#128203; Copy</button></div>
       <div class="exp-card"><div class="sb-label">Stats</div><div class="stats-grid">
         <div class="stat-card"><div class="stat-val" id="xWords">0</div><div class="stat-lbl">Words</div></div>
@@ -674,6 +676,7 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
   <div class="modal-body">
     <div class="upload-area" id="figUpload" onclick="document.getElementById('figFileIn').click()" ondrop="handleFigDrop(event)" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')"><div class="upload-icon">&#128444;&#65039;</div><div class="upload-txt">Click or drag &amp; drop image here</div><div style="font-size:10px;opacity:.4;margin-top:5px">PNG, JPG, GIF, SVG, WebP</div></div>
     <input type="file" id="figFileIn" accept="image/*" style="display:none" onchange="handleFigFile(event)">
+    <input type="file" id="iefFileIn" accept=".ief,application/json" style="display:none" onchange="handleIEFFile(event)">
     <div id="figPreviewArea" style="display:none;margin-top:12px">
       <img id="figPreviewImg" style="max-width:100%;border-radius:var(--rsm);margin-bottom:10px;max-height:200px;object-fit:contain;width:100%">
       <div class="fg"><label class="flbl">Caption (8pt, appears below figure as "Fig. N. Caption")</label><input class="finput" id="figCaption" placeholder="Caption text&#8230;"></div>
@@ -835,7 +838,7 @@ function onSelChange(){setTimeout(()=>{const sel=window.getSelection();if(sel&&s
 function onEditorSel(){onSelChange();}
 function showInlineTb(r){const tb=document.getElementById('inlineTb');const rect=r.getBoundingClientRect();tb.style.top=(rect.top-46)+'px';tb.style.left=(rect.left+rect.width/2-80)+'px';tb.classList.add('show');}
 function hideInlineTb(){document.getElementById('inlineTb').classList.remove('show');}
-function globalKeys(e){if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();exportHTML();}if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();exportPDF();}if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='y'){e.preventDefault();doRedo();}if(e.key==='Escape')document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));}
+function globalKeys(e){if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveIEF();}if((e.ctrlKey||e.metaKey)&&e.key==='o'){e.preventDefault();openIEF();}if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();exportPDF();}if((e.ctrlKey||e.metaKey)&&!e.shiftKey&&e.key==='y'){e.preventDefault();doRedo();}if(e.key==='Escape')document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));}
 
 const REF_TEMPLATES={
   journal:`<div class="fg"><label class="flbl">Journal Name</label><input class="finput" id="rfJournal" placeholder="IEEE Trans. Neural Netw. Learn. Syst." oninput="updateRefPreview()"></div><div class="frow"><div class="fg"><label class="flbl">Volume</label><input class="finput" id="rfVol" placeholder="10" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Number</label><input class="finput" id="rfNum" placeholder="3" oninput="updateRefPreview()"></div></div><div class="frow"><div class="fg"><label class="flbl">Pages</label><input class="finput" id="rfPages" placeholder="123&#8211;134" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Month (opt.)</label><input class="finput" id="rfMonth" placeholder="Jan." oninput="updateRefPreview()"></div></div>`,
@@ -943,6 +946,59 @@ document.querySelectorAll('.modal-ov').forEach(ov=>{ov.addEventListener('click',
 
 function exportPDF(){toast('Opening print dialog \u2014 choose \u201CSave as PDF\u201D','inf');setTimeout(()=>window.print(),600);}
 function exportHTML(){const state={theme:document.documentElement.getAttribute('data-theme'),refs:S.refs,figs:S.figs,keywords:[...keywords]};let html=document.documentElement.outerHTML;const inject=`<script>window.__SAVED_STATE__=${JSON.stringify(state)}<\/script>`;html=html.replace('</body>',inject+'</body>');const blob=new Blob([html],{type:'text/html'}),url=URL.createObjectURL(blob);const a=document.createElement('a'),title=document.getElementById('paperTitle').value||'ieee-paper';a.href=url;a.download=title.toLowerCase().replace(/\s+/g,'-').slice(0,40)+'.html';a.click();URL.revokeObjectURL(url);toast('Paper saved!');}
+/* ===== PROJECT SAVE / OPEN (.ief — structured JSON) =====
+   A .ief file is plain JSON that captures every part of the document
+   (title, authors, abstract, index terms, all section bodies including
+   their citations/figures/tables/equations, references, figures, theme
+   and counters) so opening it recreates the document exactly. */
+const IEF_VERSION=1;
+function collectProject(){
+  const authors=[...document.querySelectorAll('#authorsList .author-entry')].map(e=>{
+    const g=sel=>{const el=e.querySelector(sel);return el?el.innerHTML:'';};
+    return {name:g('[data-au-name]'),dept:g('[data-au-dept]'),org:g('[data-au-org]'),city:g('[data-au-city]'),email:g('[data-au-email]')};
+  });
+  const sections=[...document.querySelectorAll('.paper-section')].map(s=>({
+    title:s.querySelector('.sec-title-in')?.value||'',
+    body:s.querySelector('.sec-body')?.innerHTML||''
+  }));
+  return {format:'IEEEForge',version:IEF_VERSION,savedAt:new Date().toISOString(),
+    theme:document.documentElement.getAttribute('data-theme')||'light',
+    title:document.getElementById('paperTitle').value||'',
+    authors,
+    abstract:document.getElementById('abstractEd').innerHTML||'',
+    keywords:[...keywords],
+    sections,
+    refs:S.refs,figs:S.figs,
+    counters:{section:sectionCount,table:S.tableCount,eq:S.eqCount,fig:figCount}};
+}
+function iefFileName(title){const n=(title||'ieee-paper').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,48);return(n||'ieee-paper')+'.ief';}
+function saveIEF(){
+  const data=collectProject();
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=iefFileName(data.title);a.click();URL.revokeObjectURL(url);
+  toast('Project saved (.ief)');
+}
+function openIEF(){document.getElementById('iefFileIn').click();}
+function handleIEFFile(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{let data;try{data=JSON.parse(ev.target.result);}catch(err){toast('Could not open — file is not valid .ief','err');return;}loadProject(data);};r.readAsText(f);e.target.value='';}
+function addAuthorWith(a){addAuthor();const entry=document.getElementById('authorsList').lastElementChild;if(!entry)return;const set=(sel,v)=>{const el=entry.querySelector(sel);if(el)el.innerHTML=v||'';};set('[data-au-name]',a.name);set('[data-au-dept]',a.dept);set('[data-au-org]',a.org);set('[data-au-city]',a.city);set('[data-au-email]',a.email);}
+function loadProject(data){
+  if(!data||data.format!=='IEEEForge'){toast('Not an IEEEForge (.ief) project file','err');return;}
+  const theme=data.theme==='dark'?'dark':'light';document.documentElement.setAttribute('data-theme',theme);const cb=document.getElementById('themeCb');if(cb)cb.checked=(theme==='dark');
+  const titleEl=document.getElementById('paperTitle');titleEl.value=data.title||'';autoResize(titleEl);
+  document.getElementById('authorsList').innerHTML='';(data.authors&&data.authors.length?data.authors:[{}]).forEach(addAuthorWith);
+  const ab=document.getElementById('abstractEd');ab.innerHTML=data.abstract||'';updateAbstractWC();
+  keywords.length=0;(data.keywords||[]).forEach(k=>keywords.push(k));renderKW();
+  document.getElementById('sectionsContainer').innerHTML='';sectionCount=0;
+  (data.sections||[]).forEach(s=>{const div=addSection('');const ti=div.querySelector('.sec-title-in');if(ti)ti.value=s.title||'';const bd=div.querySelector('.sec-body');if(bd)bd.innerHTML=s.body||'';});
+  if(!document.querySelector('.paper-section'))addSection('Introduction');
+  renumberSections();
+  S.refs=Array.isArray(data.refs)?data.refs:[];renderRefs();updateCiteNums();
+  S.figs=Array.isArray(data.figs)?data.figs:[];renderFigsPanel();
+  const c=data.counters||{};S.tableCount=c.table||0;S.eqCount=c.eq||0;figCount=(c.fig!=null?c.fig:S.figs.length);
+  updateOutline();updateStats();
+  toast('Project opened');
+}
 function copyRefs(){if(!S.refs.length){toast('No references to copy.','inf');return;}const text=S.refs.map((ref,i)=>`[${i+1}] ${fmtRefStr(ref.type,ref.authors,ref.title,ref,ref.year,ref.doi).replace(/<\/?em>/g,'')}`).join('\n\n');navigator.clipboard.writeText(text).then(()=>toast('References copied!')).catch(()=>toast('Copy failed.','err'));}
 function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function toast(msg,type=''){const c=document.getElementById('toasts'),t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;c.appendChild(t);requestAnimationFrame(()=>{t.classList.add('show');setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},3200);});}
