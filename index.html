@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IEEEForge — Paper Editor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend+Deca:wght@300;400;500;600;700&family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.css">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+/* ===== APP UI TOKENS (toolbar/sidebar/panels only) ===== */
+:root {
+  --text:#011a1e;--bg:#ecfafe;--primary:#15d3f9;--pri-dim:rgba(21,211,249,.13);
+  --secondary:#d079fb;--sec-dim:rgba(208,121,251,.13);--accent:#fa4ce6;--acc-dim:rgba(250,76,230,.13);
+  --surface:#fff;--s2:#f4fbfe;--s3:#e8f7fc;
+  --border:rgba(1,26,30,.09);--brd:rgba(1,26,30,.18);
+  --sh0:0 1px 2px rgba(1,26,30,.05);--sh1:0 2px 6px rgba(1,26,30,.07),0 1px 2px rgba(1,26,30,.04);
+  --sh2:0 4px 16px rgba(1,26,30,.08),0 2px 4px rgba(1,26,30,.04);
+  --sh3:0 20px 60px rgba(1,26,30,.1),0 4px 12px rgba(1,26,30,.06);
+  --fh:'Lexend Deca',system-ui,sans-serif;--fb:'Inter',system-ui,sans-serif;
+  --txs:.563rem;--tsm:.75rem;--tb:1rem;--tlg:1.333rem;
+  --rxs:.375rem;--rsm:.625rem;--r:1rem;--rlg:1.375rem;--rxl:1.875rem;--rfull:9999px;
+  --sbw:228px;--pnw:304px;--tbh:58px;
+}
+[data-theme=dark]{
+  --text:#e1fafe;--bg:#010f13;--primary:#06c4ea;--pri-dim:rgba(6,196,234,.14);
+  --secondary:#5a0486;--sec-dim:rgba(90,4,134,.3);--accent:#b3059f;--acc-dim:rgba(179,5,159,.18);
+  --surface:#021820;--s2:#031d25;--s3:#052633;
+  --border:rgba(225,250,254,.08);--brd:rgba(225,250,254,.15);
+  --sh0:0 1px 2px rgba(0,0,0,.25);--sh1:0 2px 6px rgba(0,0,0,.35);
+  --sh2:0 4px 16px rgba(0,0,0,.45);--sh3:0 20px 60px rgba(0,0,0,.55),0 4px 12px rgba(0,0,0,.3);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:16px;scroll-behavior:smooth}
+body{font-family:var(--fb);background:var(--bg);color:var(--text);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased;transition:background .25s,color .25s}
+input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-decoration:none;color:inherit}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--brd);border-radius:var(--rfull)}::-webkit-scrollbar-thumb:hover{background:var(--primary)}
+::selection{background:var(--pri-dim);color:var(--text)}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important}}
+.app{display:flex;flex-direction:column;height:100vh}
+.workspace{display:flex;flex:1;overflow:hidden}
+
+/* ===== TOOLBAR ===== */
+.toolbar{height:var(--tbh);background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:2px;padding:0 12px;z-index:100;flex-shrink:0;box-shadow:var(--sh0)}
+.tb-brand{display:flex;align-items:center;gap:8px;margin-right:8px}
+.tb-logo{width:30px;height:30px;background:linear-gradient(135deg,var(--primary),var(--secondary));border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;font-family:var(--fh);font-weight:700;font-size:11px;color:#010f13;flex-shrink:0}
+.tb-name{font-family:var(--fh);font-size:var(--tsm);font-weight:600;white-space:nowrap}
+.tb-div{width:1px;height:26px;background:var(--border);margin:0 4px;flex-shrink:0}
+.tb-group{display:flex;align-items:center;gap:1px}
+.tb-btn{display:flex;align-items:center;justify-content:center;gap:5px;padding:5px 8px;border:none;background:transparent;color:var(--text);border-radius:var(--rsm);font-size:var(--tsm);font-weight:500;transition:background .12s,color .12s;white-space:nowrap;flex-shrink:0}
+.tb-btn:hover{background:var(--s2)}.tb-btn.on{background:var(--pri-dim);color:var(--primary)}
+.tb-btn svg{width:15px;height:15px;flex-shrink:0}.tb-btn span{font-size:var(--txs)}.tb-spacer{flex:1}
+.tb-export{padding:6px 14px;font-size:var(--tsm);font-weight:600;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:var(--rsm);color:#010f13;box-shadow:var(--sh0);transition:opacity .12s,transform .12s;white-space:nowrap}
+.tb-export:hover{opacity:.9;transform:translateY(-1px);box-shadow:var(--sh1)}
+.theme-toggle{display:flex;align-items:center;gap:6px;padding:5px 8px;border:1px solid var(--border);border-radius:var(--rfull);background:var(--s2);transition:border-color .15s;cursor:pointer}
+.theme-toggle:hover{border-color:var(--primary)}
+.tog-track{width:32px;height:18px;background:var(--brd);border-radius:var(--rfull);position:relative;transition:background .2s}
+[data-theme=dark] .tog-track{background:var(--primary)}
+.tog-thumb{width:14px;height:14px;background:#fff;border-radius:50%;position:absolute;top:2px;left:2px;box-shadow:var(--sh0);transition:transform .2s}
+[data-theme=dark] .tog-thumb{transform:translateX(14px)}.tog-icon{font-size:13px}
+[data-tip]{position:relative}
+[data-tip]::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11px;padding:4px 8px;border-radius:var(--rxs);white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;z-index:500}
+[data-tip]:hover::after{opacity:1}
+
+/* ===== SIDEBAR ===== */
+.sidebar{width:var(--sbw);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;transition:width .2s;flex-shrink:0}
+.sidebar.closed{width:0}
+.sb-section{padding:12px;border-bottom:1px solid var(--border);overflow:hidden}
+.sb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;opacity:.45;margin-bottom:8px;white-space:nowrap}
+.outline{list-style:none;display:flex;flex-direction:column;gap:1px}
+.outline-item{display:flex;align-items:center;gap:7px;padding:5px 8px;border-radius:var(--rsm);font-size:var(--txs);font-weight:500;cursor:pointer;transition:background .12s;white-space:nowrap;overflow:hidden}
+.outline-item:hover{background:var(--s2)}.outline-item.active{background:var(--pri-dim);color:var(--primary)}
+.odot{width:5px;height:5px;border-radius:50%;background:var(--primary);flex-shrink:0}
+.sb-btns{display:flex;flex-direction:column;gap:5px}
+.sb-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px dashed var(--border);background:transparent;color:var(--text);border-radius:var(--r);font-size:var(--txs);font-weight:500;transition:all .12s;width:100%;text-align:left;white-space:nowrap}
+.sb-btn:hover{background:var(--pri-dim);border-color:var(--primary);color:var(--primary)}
+.sb-btn svg{width:12px;height:12px;flex-shrink:0}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.stat-card{background:var(--s2);border-radius:var(--rsm);padding:8px;text-align:center}
+.stat-val{font-family:var(--fh);font-size:var(--tlg);font-weight:600;color:var(--primary)}
+.stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:.08em;opacity:.5;margin-top:2px}
+
+/* ===== EDITOR CANVAS ===== */
+.editor-area{flex:1;overflow:auto;background:var(--bg);padding:32px 24px}
+
+/* ================================================================
+   IEEE PAPER SHEET — TRUE TWO-COLUMN WYSIWYG
+   Follows the official IEEE conference template geometry exactly,
+   verified against IEEE-IES "Paper Format for Conferences" and the
+   IEEE-paper-format-template.docx. Plain values only — never theme vars.
+
+   Page geometry (US Letter 8.5in × 11in):
+   • Page size:   8.5in wide (US Letter)
+   • Margins:     0.75in top · 0.62in left/right · 1.0in bottom
+   • Columns:     TWO columns, 3.5in each, 0.25in gutter between them
+   • Full-width:  ONLY the title + author block span both columns.
+                  Abstract, Index Terms, body and References all flow
+                  inside the two columns (IEEE does NOT span these).
+
+   Type styles:
+   • Title:       Times New Roman, 24pt, weight 400, centered
+   • Authors:     Times New Roman, 10pt, centered; affil/email italic
+   • Abstract:    "Abstract" bold+italic label + em-dash; whole abstract
+                  body is 9pt BOLD, justified
+   • Index Terms: "Index Terms" bold+italic label + em-dash; 9pt bold
+   • H1 sections: small-caps, bold, centered, Roman numeral prefix
+   • H2 subsect.: italic, normal weight, left-aligned, letter prefix
+   • H3/H4:       italic, inline with body, number/letter prefix
+   • Body text:   10pt, justified, 0.2in first-line indent, single-spaced
+   • Paragraphs:  6pt spacing after each
+   • Figures:     caption 8pt below, "Fig. N." bold prefix; may span
+                  one column or both columns (figure*)
+   • Tables:      caption 8pt ABOVE table (small-caps), ruled borders
+   • References:  8pt, [n] prefix, appearance-ordered; flows in columns
+================================================================ */
+.paper-sheet{
+  width:8.5in;max-width:8.5in;margin:0 auto;
+  background:#ffffff;color:#000000;
+  font-family:'Times New Roman',Times,serif;font-size:10pt;
+  border-radius:3px;box-shadow:var(--sh3);overflow:visible;
+  /* IEEE US-Letter margins: top 0.75in · sides 0.62in · bottom 1.0in */
+  padding:.75in .62in 1in .62in;min-height:11in;
+}
+
+/* Title + author block — spans the FULL page width above the columns */
+.paper-hdr{background:#fff;padding:0 0 10pt;border-bottom:none;text-align:center}
+.paper-title-ta{
+  width:100%;font-family:'Times New Roman',Times,serif;font-size:24pt;
+  font-weight:400;color:#000;background:transparent;border:none;outline:none;
+  text-align:center;line-height:1.1;resize:none;overflow:hidden;min-height:56px;
+}
+.paper-title-ta::placeholder{opacity:.2;font-style:italic}
+.paper-title-ta:hover,.paper-title-ta:focus{outline:1px dashed rgba(21,211,249,.5);outline-offset:2px}
+.authors-area{margin-top:12px}
+.authors-list{display:flex;flex-direction:column;gap:4px}
+.author-entry{display:flex;gap:6px;align-items:flex-start}
+.author-fields{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:3px}
+.author-fields .full{grid-column:1/-1}
+.p-input{
+  padding:3px 4px;border:1px dashed transparent;border-radius:2px;
+  background:transparent;color:#000;font-family:'Times New Roman',Times,serif;
+  font-size:10pt;outline:none;width:100%;text-align:center;transition:border-color .12s,background .12s;
+}
+.p-input:hover{border-color:rgba(21,211,249,.45)}
+.p-input:focus{border-color:var(--primary);background:rgba(255,255,255,.9)}
+.p-input[data-au-affil],.p-input[data-au-email]{font-style:italic}
+.p-input::placeholder{opacity:.22;font-style:italic}
+.btn-icon{width:24px;height:24px;border:none;background:var(--s2);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;color:var(--text);opacity:.5;transition:all .12s;flex-shrink:0}
+.btn-icon:hover{opacity:1;background:var(--acc-dim);color:var(--accent)}.btn-icon svg{width:11px;height:11px}
+.add-author-btn{display:flex;align-items:center;justify-content:center;gap:5px;margin-top:8px;padding:5px 12px;border:1px dashed var(--border);background:transparent;color:var(--text);opacity:.5;border-radius:var(--rsm);font-family:var(--fb);font-size:var(--txs);font-weight:500;transition:all .12s;width:100%}
+.add-author-btn:hover{opacity:1;border-color:var(--primary);color:var(--primary);background:var(--pri-dim)}
+
+/* Paper body container — the IEEE two-column text region.
+   Abstract, Index Terms, all sections and References flow through
+   these two columns (3.5in each, 0.25in gutter) just like a real
+   IEEE paper. Only figures/tables/equations are kept from splitting. */
+.paper-body{
+  padding:0;background:#fff;
+  column-count:2;column-gap:.25in;column-rule:none;
+  -webkit-column-count:2;-webkit-column-gap:.25in;
+}
+
+/* ── ABSTRACT ──
+   Template Abstract style: 9pt, bold, justified.
+   "Abstract" is italic+bold inline label, followed by em-dash, then 9pt body text.
+   The body of the abstract (per template) is 9pt, bold, justified.
+*/
+.abstract-wrap{margin:0 0 6pt;font-family:'Times New Roman',Times,serif;font-size:9pt;line-height:1.35;color:#000;text-align:justify;break-inside:avoid}
+.abstract-inline{display:block}
+.abstract-lbl{font-family:'Times New Roman',Times,serif;font-size:9pt;font-style:italic;font-weight:bold;color:#000}
+.abstract-lbl::after{content:'\2014';font-style:normal;font-weight:bold}
+/* Per IEEE, the entire abstract body is set BOLD, 9pt, justified */
+.abstract-ed{display:inline;font-family:'Times New Roman',Times,serif;font-size:9pt;font-weight:bold;font-style:normal;line-height:1.35;color:#000;outline:none}
+.abstract-ed:empty::before{content:attr(data-ph);opacity:.25;pointer-events:none;font-style:italic}
+.abstract-ed:focus,.abstract-ed:hover{outline:1px dashed rgba(21,211,249,.35);outline-offset:1px;border-radius:1px}
+.abstract-wc{font-family:var(--fb);font-size:9px;opacity:.45;text-align:right;margin-top:3px;color:var(--text)}
+
+/* ── INDEX TERMS (Keywords) ──
+   IEEE "Index Terms" style: 9pt, BOLD. Label is bold+italic followed
+   by an em-dash, then the bold comma-separated terms.
+*/
+.kw-row{margin:0 0 6pt;display:flex;align-items:flex-start;flex-wrap:wrap;break-inside:avoid}
+.kw-lbl{font-family:'Times New Roman',Times,serif;font-size:9pt;font-style:italic;font-weight:bold;color:#000;white-space:nowrap;line-height:1.5;margin-right:0}
+.kw-lbl::after{content:'\2014'}
+.kw-box{flex:1;display:flex;flex-wrap:wrap;gap:0 4px;padding:1px 3px;border:1px dashed transparent;border-radius:2px;min-height:20px;background:transparent;cursor:text;transition:border-color .12s;line-height:1.5}
+.kw-box:focus-within{border-color:rgba(21,211,249,.4)}
+.kw-tag{font-family:'Times New Roman',Times,serif;font-size:9pt;font-style:normal;font-weight:bold;color:#000;display:flex;align-items:center;gap:2px}
+.kw-tag::after{content:','}.kw-tag:last-of-type::after{content:''}
+.kw-x{background:transparent;border:none;color:var(--primary);font-size:9px;cursor:pointer}
+.kw-input{border:none;background:transparent;outline:none;font-family:'Times New Roman',Times,serif;font-size:9pt;font-style:normal;font-weight:bold;color:#000;min-width:120px}
+.kw-input::placeholder{opacity:.28}
+
+/* ── LEVEL 1 SECTION HEADINGS ──
+   Template Heading1: small-caps, bold, centered, auto-numbered with Roman numerals.
+   "I. Introduction" — all in small-caps, bold, centered.
+   NOTE: font-variant:small-caps is NOT the same as text-transform:uppercase.
+   Small-caps renders lowercase letters as smaller uppercase letterforms.
+*/
+.paper-section{margin-bottom:0;position:relative}
+.sec-ctrls{position:absolute;right:-44px;top:2px;display:none;gap:2px;flex-direction:column}
+.paper-section:hover .sec-ctrls{display:flex}
+.sec-hdr{display:flex;align-items:baseline;justify-content:center;gap:4px;margin-top:12pt;margin-bottom:6pt;text-indent:0}
+.sec-num{font-family:'Times New Roman',Times,serif;font-size:10pt;font-weight:bold;font-variant:small-caps;color:#000;flex-shrink:0}
+.sec-title-in{
+  font-family:'Times New Roman',Times,serif;font-size:10pt;font-weight:bold;
+  font-variant:small-caps;text-align:center;color:#000;
+  border:none;background:transparent;outline:none;padding:0;
+  flex:0 1 auto;min-width:60px;max-width:560px;
+}
+.sec-title-in::placeholder{font-variant:normal;font-weight:400;opacity:.22;text-transform:none}
+.sec-title-in:hover,.sec-title-in:focus{outline:1px dashed rgba(21,211,249,.45);outline-offset:2px}
+
+/* ── BODY TEXT ──
+   Template BodyText: 10pt Times New Roman, justified, single-spaced.
+   First-line indent: 0.2in (14.4pt per template).
+   Spacing after: 6pt per paragraph.
+   No indent for headings within body; indent applies to each <p>/<div> created by Enter.
+*/
+.sec-body{
+  font-family:'Times New Roman',Times,serif;font-size:10pt;
+  line-height:1.25;color:#000;text-align:justify;
+  text-indent:0.2in;outline:none;min-height:44px;
+  padding:1px 3px;border:1px dashed transparent;border-radius:2px;transition:border-color .12s;
+}
+.sec-body>p,.sec-body>div:not([class]){text-indent:0.2in;margin-bottom:6pt;margin-top:0}
+.sec-body:hover{border-color:rgba(21,211,249,.22)}
+.sec-body:focus{border-color:rgba(21,211,249,.45)}
+.sec-body:empty::before{content:attr(data-ph);opacity:.2;pointer-events:none;font-style:italic;text-indent:0}
+
+/* ── LEVEL 2 HEADING (A. Italic, left-aligned) ── */
+.ieee-h2{
+  display:block;font-family:'Times New Roman',Times,serif;font-size:10pt;
+  font-style:italic;font-weight:normal;text-align:left;color:#000;
+  margin:9pt 0 3pt;text-indent:0;outline:none;
+  border:1px dashed transparent;border-radius:2px;padding:1px 2px;
+}
+.ieee-h2:empty::before{content:'A. Subsection Title';opacity:.25;pointer-events:none}
+.ieee-h2:hover,.ieee-h2:focus{border-color:rgba(21,211,249,.4)}
+
+/* ── LEVEL 3 HEADING (1) italic, flows into body) ── */
+.ieee-h3{
+  display:block;font-family:'Times New Roman',Times,serif;font-size:10pt;
+  font-style:italic;font-weight:normal;text-align:justify;color:#000;
+  margin:6pt 0 0;text-indent:0;outline:none;
+  border:1px dashed transparent;border-radius:2px;padding:1px 2px;
+}
+.ieee-h3:empty::before{content:'1) Sub-subsection heading:';opacity:.25;pointer-events:none}
+.ieee-h3:hover,.ieee-h3:focus{border-color:rgba(21,211,249,.4)}
+
+/* ── LEVEL 4 HEADING (a) italic) ── */
+.ieee-h4{display:block;font-family:'Times New Roman',Times,serif;font-size:10pt;font-style:italic;font-weight:normal;text-align:justify;color:#000;margin:4pt 0 0;text-indent:0;outline:none;border:1px dashed transparent;border-radius:2px;padding:1px 2px}
+.ieee-h4:empty::before{content:'a) Paragraph heading:';opacity:.25;pointer-events:none}
+.ieee-h4:hover,.ieee-h4:focus{border-color:rgba(21,211,249,.4)}
+
+/* ── IN-TEXT CITATIONS [n] ──
+   IEEE: inline bracketed [1] at baseline — NOT superscript.
+   Numbered in order of first appearance.
+*/
+.cite{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;vertical-align:baseline;cursor:pointer;transition:background .12s;border-radius:2px;padding:0 1px;user-select:text}
+.cite:hover{background:rgba(21,211,249,.18);color:#004477}
+.cite.lit{background:rgba(21,211,249,.28);font-weight:bold}
+
+/* ── FIGURE (caption 8pt below, "Fig. N." bold) ──
+   Single-column by default; .span2 makes a figure* spanning BOTH columns. */
+.ieee-fig{margin:8pt auto;text-align:center;background:#fff;border:1px dashed transparent;border-radius:3px;padding:2px;transition:border-color .12s;break-inside:avoid;-webkit-column-break-inside:avoid}
+.ieee-fig.span2{column-span:all;-webkit-column-span:all;width:100%!important}
+.ieee-fig:hover{border-color:rgba(21,211,249,.3)}
+.ieee-fig img{max-width:100%;height:auto;display:block;margin:0 auto}
+.ieee-fig-cap{padding:4px 2px 2px;font-family:'Times New Roman',Times,serif;font-size:8pt;color:#000;text-align:justify;line-height:1.35;outline:none}
+.ieee-fig-cap::before{content:attr(data-lbl) '. ';font-weight:bold}
+.ieee-fig-cap:hover,.ieee-fig-cap:focus{outline:1px dashed rgba(21,211,249,.35)}
+
+/* ── TABLE (caption ABOVE, 8pt small-caps; ruled borders, no verticals) ── */
+.ieee-tbl-wrap{margin:8pt 0;overflow-x:auto;break-inside:avoid;-webkit-column-break-inside:avoid}
+.ieee-tbl-wrap.span2{column-span:all;-webkit-column-span:all}
+.ieee-tbl-cap{font-family:'Times New Roman',Times,serif;font-size:8pt;font-variant:small-caps;font-weight:bold;text-align:center;margin-bottom:4pt;outline:none;color:#000}
+.ieee-tbl-cap:hover,.ieee-tbl-cap:focus{outline:1px dashed rgba(21,211,249,.35)}
+.ieee-tbl{width:100%;border-collapse:collapse;font-family:'Times New Roman',Times,serif;font-size:8pt;color:#000}
+.ieee-tbl thead tr{border-top:1.5pt solid #000;border-bottom:.75pt solid #000}
+.ieee-tbl tbody tr:last-child{border-bottom:1.5pt solid #000}
+.ieee-tbl th{padding:2pt 8pt;font-weight:bold;text-align:center;background:transparent;border:none}
+.ieee-tbl td{padding:2pt 8pt;border:none}
+
+/* ── EQUATION ── */
+.ieee-eq{display:flex;align-items:center;gap:12px;margin:6pt 0;break-inside:avoid;-webkit-column-break-inside:avoid}
+.ieee-eq-content{flex:1;text-align:center}
+.ieee-eq-num{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;white-space:nowrap}
+
+/* ── REFERENCES ──
+   Heading: Heading5 style = small-caps, bold, centered, unnumbered.
+   Body: 8pt Times New Roman, justified, [n] prefix.
+   Ordered by first appearance in text (IEEE standard).
+*/
+.refs-section{padding-top:0;border-top:none;margin-top:10pt}
+.refs-heading{font-family:'Times New Roman',Times,serif;font-size:10pt;font-weight:bold;font-variant:small-caps;text-align:center;color:#000;margin:6pt 0 4pt;break-after:avoid}
+.ref-item{display:flex;gap:6px;font-family:'Times New Roman',Times,serif;font-size:8pt;line-height:1.4;color:#000;margin-bottom:4pt;padding:2px 3px;border-radius:2px;cursor:pointer;transition:background .12s;text-align:left}
+.ref-item:hover{background:rgba(21,211,249,.08)}.ref-item.lit{background:rgba(21,211,249,.14)}
+.ref-num{color:#000;font-weight:normal;min-width:22px;flex-shrink:0}
+[contenteditable="true"]{cursor:text}
+
+/* ===== RIGHT PANEL ===== */
+.panel-right{width:var(--pnw);background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;flex-shrink:0}
+.pn-tabs{display:flex;border-bottom:1px solid var(--border)}
+.pn-tab{flex:1;padding:10px 6px;border:none;background:transparent;color:var(--text);font-size:var(--txs);font-weight:500;opacity:.5;transition:all .12s;text-align:center}
+.pn-tab.on{opacity:1;color:var(--primary);border-bottom:2px solid var(--primary);margin-bottom:-1px}
+.pn-tab:hover:not(.on){opacity:.85;background:var(--s2)}
+.pn-content{flex:1;overflow-y:auto;padding:14px}
+.pn-tabpane{display:none}.pn-tabpane.on{display:block}
+.ref-cards{display:flex;flex-direction:column;gap:8px}
+.ref-card{background:var(--s2);border-radius:var(--r);padding:10px 12px;border:1px solid transparent;transition:border-color .12s}
+.ref-card:hover{border-color:var(--primary)}.ref-card.lit{border-color:var(--primary);background:var(--pri-dim)}
+.rc-num{font-size:var(--txs);font-weight:700;color:var(--primary);margin-bottom:3px}
+.rc-title{font-size:var(--txs);font-weight:600;line-height:1.35;margin-bottom:2px}
+.rc-meta{font-size:10px;opacity:.55}
+.rc-actions{display:flex;gap:5px;margin-top:7px}
+.rc-btn{padding:3px 8px;border:1px solid var(--border);background:transparent;color:var(--text);border-radius:var(--rxs);font-size:10px;font-weight:500;transition:all .12s}
+.rc-btn:hover{background:var(--pri-dim);border-color:var(--primary);color:var(--primary)}
+.rc-btn.del:hover{background:var(--acc-dim);border-color:var(--accent);color:var(--accent)}
+.add-ref-btn{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;border:2px dashed var(--border);background:transparent;color:var(--text);border-radius:var(--r);font-size:var(--tsm);font-weight:500;transition:all .12s;width:100%;margin-bottom:10px}
+.add-ref-btn:hover{border-color:var(--primary);color:var(--primary);background:var(--pri-dim)}
+.bibtex-wrap{border:1px solid var(--border);border-radius:var(--r);padding:10px;margin-bottom:10px}
+.bibtex-lbl{font-size:10px;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.fig-cards{display:flex;flex-direction:column;gap:8px}
+.fig-card{background:var(--s2);border-radius:var(--r);overflow:hidden;border:1px solid var(--border)}
+.fig-card img{width:100%;height:72px;object-fit:cover}
+.fig-card-b{padding:8px 10px}.fig-card-lbl{font-size:var(--txs);font-weight:700;color:var(--primary)}
+.fig-card-cap{font-size:10px;opacity:.6;margin-top:2px}
+.exp-card{background:var(--s2);border-radius:var(--r);padding:14px;margin-bottom:10px}
+.exp-card p{font-size:var(--txs);opacity:.65;line-height:1.6;margin:6px 0 10px}
+
+/* ===== BUTTONS ===== */
+.btn-pri{padding:9px 20px;background:linear-gradient(135deg,var(--primary),var(--secondary));border:none;border-radius:var(--rsm);color:#010f13;font-size:var(--tsm);font-weight:600;transition:all .12s}
+.btn-pri:hover{opacity:.9;transform:translateY(-1px);box-shadow:var(--sh1)}.btn-pri.full{width:100%}
+.btn-sec{padding:9px 18px;background:transparent;border:1px solid var(--border);border-radius:var(--rsm);color:var(--text);font-size:var(--tsm);font-weight:500;transition:all .12s}
+.btn-sec:hover{background:var(--s2);border-color:var(--brd)}.btn-sec.full{width:100%}
+
+/* ===== MODALS ===== */
+.modal-ov{position:fixed;inset:0;background:rgba(1,26,30,.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .18s}
+[data-theme=dark] .modal-ov{background:rgba(0,0,0,.65)}
+.modal-ov.open{opacity:1;pointer-events:all}
+.modal{background:var(--surface);border-radius:var(--rxl);box-shadow:var(--sh3);width:90%;max-width:580px;max-height:88vh;overflow-y:auto;transform:translateY(14px) scale(.97);transition:transform .18s}
+.modal-ov.open .modal{transform:translateY(0) scale(1)}
+.modal-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-family:var(--fh);font-size:var(--tlg);font-weight:600}
+.modal-x{width:28px;height:28px;border:none;background:var(--s2);border-radius:var(--rsm);display:flex;align-items:center;justify-content:center;color:var(--text);font-size:14px;transition:all .12s}
+.modal-x:hover{background:var(--acc-dim);color:var(--accent)}
+.modal-body{padding:20px 22px}
+.modal-foot{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--surface)}
+.fg{margin-bottom:14px}.fg:last-child{margin-bottom:0}
+.flbl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.6;margin-bottom:5px}
+.finput{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--s2);color:var(--text);font-size:var(--tsm);outline:none;transition:border-color .12s,box-shadow .12s}
+.finput:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--pri-dim)}
+.finput.ta{resize:vertical;min-height:80px}
+.finput.sel{appearance:none;cursor:pointer;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:14px;padding-right:36px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.preview-box{background:var(--s2);border-radius:var(--rsm);padding:12px;font-size:var(--txs);line-height:1.65;font-style:italic;min-height:50px}
+.atags{display:flex;flex-wrap:wrap;gap:5px;padding:7px 10px;border:1px solid var(--border);border-radius:var(--rsm);background:var(--s2);min-height:40px;cursor:text;transition:border-color .12s,box-shadow .12s}
+.atags:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px var(--pri-dim)}
+.atag{display:flex;align-items:center;gap:3px;padding:2px 8px;background:var(--pri-dim);color:var(--primary);border-radius:var(--rfull);font-size:var(--txs);font-weight:500}
+.atag button{background:none;border:none;color:inherit;font-size:10px;cursor:pointer}
+.atag-in{border:none;background:transparent;outline:none;font-size:var(--txs);color:var(--text);min-width:100px}
+.upload-area{border:2px dashed var(--border);border-radius:var(--rlg);padding:28px;text-align:center;cursor:pointer;transition:all .18s}
+.upload-area:hover,.upload-area.drag{border-color:var(--primary);background:var(--pri-dim)}
+.upload-icon{font-size:1.8rem;margin-bottom:8px}.upload-txt{font-size:var(--tsm);opacity:.65}
+.cite-list{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:6px}
+.empty-st{text-align:center;padding:24px 12px;opacity:.45}
+.empty-st-icon{font-size:1.6rem;margin-bottom:8px}.empty-st-txt{font-size:var(--tsm)}
+.chart-type-btns{display:flex;gap:6px;flex-wrap:wrap}
+.chart-type-btn{padding:6px 14px;border:1px solid var(--border);border-radius:var(--rsm);background:transparent;color:var(--text);font-size:var(--txs);font-weight:500;transition:all .12s;cursor:pointer}
+.chart-type-btn:hover{background:var(--s2)}.chart-type-btn.on{background:var(--pri-dim);border-color:var(--primary);color:var(--primary)}
+.inline-tb{position:fixed;display:none;gap:1px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--rsm);padding:3px;box-shadow:var(--sh2);z-index:500}
+.inline-tb.show{display:flex}.inline-tb .tb-btn{padding:4px 7px;font-size:var(--txs)}
+.toasts{position:fixed;bottom:20px;right:20px;display:flex;flex-direction:column;gap:6px;z-index:2000}
+.toast{padding:9px 16px;background:var(--surface);border-radius:var(--rlg);box-shadow:var(--sh3);border-left:3px solid var(--primary);font-size:var(--tsm);font-weight:500;color:var(--text);transform:translateX(120%);transition:transform .28s;min-width:180px}
+.toast.show{transform:translateX(0)}.toast.err{border-color:var(--accent)}.toast.inf{border-color:var(--secondary)}
+
+/* ================================================================
+   PRINT / PDF — IEEE STANDARD TWO-COLUMN FORMAT
+   Margins: 0.75in top | 0.62in left/right | 1in bottom
+   Two-column body, 0.25in gutter.
+   ONLY the title + author block spans the full page width. The
+   abstract, Index Terms, body sections and references all flow
+   inside the two columns. Wide figures/tables can opt into full
+   width via the .span2 (figure*) class.
+================================================================ */
+@media print{
+  @page{margin:.75in .625in 1in .625in;size:8.5in 11in}
+  *,*::before,*::after{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+  body{background:#fff!important;font-family:'Times New Roman',serif!important;overflow:visible!important}
+  .toolbar,.sidebar,.panel-right,.sec-ctrls,.btn-icon,.add-author-btn,
+  .add-ref-btn,.rc-actions,.abstract-wc,.kw-x,.sb-btns,.stats-grid,
+  .modal-ov,.toasts,.inline-tb,.bibtex-wrap{display:none!important}
+  .workspace,.editor-area,.app{display:block!important;height:auto!important;overflow:visible!important}
+  .editor-area{padding:0!important;background:#fff!important}
+  .paper-sheet{box-shadow:none!important;border-radius:0!important;width:auto!important;max-width:none!important;min-height:0!important;padding:0!important}
+  /* Title block */
+  .paper-hdr{background:#fff!important;padding:0 0 10pt!important;border-bottom:none!important;text-align:center}
+  .paper-title-ta{font-size:24pt!important;font-weight:400!important;color:#000!important;background:#fff!important;border:none!important;outline:none!important;text-align:center}
+  .author-entry{display:block!important;text-align:center;margin-bottom:2pt}
+  .author-fields{display:block!important}
+  .p-input{border:none!important;background:none!important;outline:none!important;padding:0 2pt!important;font-family:'Times New Roman',serif!important;color:#000!important;font-size:9pt!important;display:inline!important;width:auto!important;box-shadow:none!important;text-align:center}
+  .p-input[data-au-affil],.p-input[data-au-email]{display:block!important;font-style:italic;font-size:9pt!important}
+  /* Two-column body — IEEE: two columns, 0.25in gutter */
+  .paper-body{padding:8pt 0 0!important;column-count:2;column-gap:.25in;background:#fff!important}
+  /* Abstract: flows in column 1 (NOT full-width), 9pt BOLD per IEEE */
+  .abstract-wrap{font-size:9pt!important;color:#000!important;text-align:justify;margin:0 0 6pt!important;break-inside:avoid}
+  .abstract-inline{display:block!important}
+  .abstract-lbl{font-size:9pt!important;font-style:italic!important;font-weight:bold!important;color:#000!important}
+  .abstract-ed{display:inline!important;font-size:9pt!important;font-weight:bold!important;color:#000!important}
+  /* Index Terms: flows in column 1, 9pt BOLD */
+  .kw-row{font-size:9pt!important;margin:0 0 6pt!important;display:flex!important;flex-wrap:wrap;break-inside:avoid}
+  .kw-lbl{font-style:italic!important;font-weight:bold!important;color:#000!important;font-size:9pt!important}
+  .kw-box{border:none!important}
+  .kw-tag{color:#000!important;font-size:9pt!important;font-style:normal!important;font-weight:bold!important}
+  .kw-input{display:none!important}
+  /* Sections flow across columns/pages; only floats are kept intact */
+  .paper-section{break-inside:auto}
+  .ieee-fig.span2,.ieee-tbl-wrap.span2{column-span:all!important;width:100%!important}
+  .sec-hdr{margin-top:10pt!important;margin-bottom:4pt!important;text-indent:0!important}
+  .sec-num,.sec-title-in{font-family:'Times New Roman',serif!important;color:#000!important;font-size:10pt!important;font-weight:bold!important;font-variant:small-caps!important;text-transform:none!important;border:none!important;background:none!important;outline:none!important}
+  .sec-body{font-family:'Times New Roman',serif!important;font-size:10pt!important;color:#000!important;line-height:1.25!important;text-align:justify!important;text-indent:0.2in!important;border:none!important;padding:0!important}
+  .sec-body>p,.sec-body>div:not([class]){text-indent:0.2in!important;margin-bottom:6pt!important}
+  /* Subsection headings */
+  .ieee-h2{font-style:italic!important;color:#000!important;font-size:10pt!important;font-weight:normal!important;border:none!important;margin:8pt 0 3pt!important;text-indent:0!important}
+  .ieee-h3,.ieee-h4{font-style:italic!important;color:#000!important;font-size:10pt!important;font-weight:normal!important;border:none!important;text-indent:0!important}
+  /* Citations */
+  .cite{color:#000!important;vertical-align:baseline!important;font-size:10pt!important;font-weight:normal!important;background:none!important;text-decoration:none!important}
+  /* Figures */
+  .ieee-fig{border:none!important;padding:0!important;break-inside:avoid}
+  .ieee-fig-cap{font-size:8pt!important;color:#000!important}
+  /* Tables */
+  .ieee-tbl-wrap{break-inside:avoid}
+  .ieee-tbl-cap{font-variant:small-caps!important;font-weight:bold!important;font-size:8pt!important;color:#000!important;border:none!important}
+  .ieee-tbl th,.ieee-tbl td{font-size:8pt!important;color:#000!important}
+  /* Equations */
+  .ieee-eq{margin:4pt 0!important}
+  .ieee-eq-num{color:#000!important;font-size:10pt!important}
+  /* References: flow in the two columns, 8pt (IEEE does not span these) */
+  .refs-section{border-top:none!important;margin-top:8pt!important;padding-top:0!important}
+  .refs-heading{font-family:'Times New Roman',serif!important;font-size:10pt!important;color:#000!important;font-variant:small-caps!important;font-weight:bold!important;text-align:center!important;text-transform:none!important;margin-bottom:6pt!important}
+  .ref-item{font-size:8pt!important;color:#000!important;padding:0!important;margin-bottom:3pt!important;line-height:1.35!important;background:none!important;text-align:left!important}
+  .ref-num{color:#000!important;font-weight:normal!important}
+  .empty-st{display:none!important}
+}
+@media(max-width:1100px){.panel-right{display:none}}
+@media(max-width:800px){.sidebar{display:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="toolbar">
+  <div class="tb-brand"><div class="tb-logo">I&#949;</div><span class="tb-name">IEEEForge</span></div>
+  <button class="tb-btn" onclick="toggleSidebar()" data-tip="Toggle outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
+  <div class="tb-div"></div>
+  <div class="tb-group">
+    <button class="tb-btn" id="boldBtn" data-tip="Bold (Ctrl+B)" onclick="fmt('bold')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/><path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/></svg></button>
+    <button class="tb-btn" id="italicBtn" data-tip="Italic (Ctrl+I)" onclick="fmt('italic')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="4" x2="10" y2="4"/><line x1="14" y1="20" x2="5" y2="20"/><line x1="15" y1="4" x2="9" y2="20"/></svg></button>
+    <button class="tb-btn" id="underlineBtn" data-tip="Underline (Ctrl+U)" onclick="fmt('underline')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3v7a6 6 0 0 0 6 6 6 6 0 0 0 6-6V3"/><line x1="4" y1="21" x2="20" y2="21"/></svg></button>
+    <button class="tb-btn" data-tip="Superscript" onclick="fmt('superscript')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 19l8-8"/><path d="M20 11h-4c0-1.5.44-2 1.5-2.5S20 7.33 20 6.25"/></svg><span>Sup</span></button>
+    <button class="tb-btn" data-tip="Subscript" onclick="fmt('subscript')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:13px;height:13px"><path d="M4 5l8 8"/><path d="M20 19h-4c0-1.5.44-2 1.5-2.5S20 15.33 20 14.25"/></svg><span>Sub</span></button>
+  </div>
+  <div class="tb-div"></div>
+  <div class="tb-group">
+    <button class="tb-btn" onclick="openCitePicker()" data-tip="Insert inline citation [n]"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2h.75c0 2.25.25 4-2.75 4v3c0 1 0 1 1 1z"/></svg><span>Cite</span></button>
+    <button class="tb-btn" onclick="openFigModal()" data-tip="Insert figure"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg><span>Figure</span></button>
+    <button class="tb-btn" onclick="openTableModal()" data-tip="Insert IEEE table"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/></svg><span>Table</span></button>
+    <button class="tb-btn" onclick="openEqModal()" data-tip="Insert LaTeX equation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg><span>Eq.</span></button>
+    <button class="tb-btn" onclick="openChartModal()" data-tip="Insert chart / graph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg><span>Chart</span></button>
+  </div>
+  <div class="tb-div"></div>
+  <div class="tb-group">
+    <button class="tb-btn" onclick="addSection()" data-tip="Add Level 1 section — Roman numeral, small-caps, centered"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg><span>H1</span></button>
+    <button class="tb-btn" onclick="insertHeading(2)" data-tip="Insert Level 2 — A. italic, left-aligned"><span style="font-style:italic;font-size:12px">H2</span></button>
+    <button class="tb-btn" onclick="insertHeading(3)" data-tip="Insert Level 3 — 1) italic, inline"><span style="font-style:italic;font-size:12px">H3</span></button>
+    <button class="tb-btn" onclick="insertHeading(4)" data-tip="Insert Level 4 — a) italic, inline"><span style="font-style:italic;font-size:12px">H4</span></button>
+  </div>
+  <div class="tb-spacer"></div>
+  <span style="font-size:var(--txs);opacity:.5;white-space:nowrap" id="wcDisplay">0 words</span>
+  <div class="tb-div"></div>
+  <button class="theme-toggle" onclick="toggleTheme()" data-tip="Toggle dark mode"><span class="tog-icon" id="themeIcon">&#9728;&#65039;</span><div class="tog-track"><div class="tog-thumb"></div></div><span class="tog-icon">&#127769;</span></button>
+  <div class="tb-div"></div>
+  <button class="tb-btn" onclick="exportHTML()" data-tip="Save HTML (Ctrl+S)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Save</button>
+  <button class="tb-export" onclick="exportPDF()">&#128196; PDF Export</button>
+</header>
+<div class="workspace">
+<aside class="sidebar" id="sidebar">
+  <div class="sb-section"><div class="sb-label">Document Outline</div><ul class="outline" id="outlineList"></ul></div>
+  <div class="sb-section"><div class="sb-label">Insert</div><div class="sb-btns">
+    <button class="sb-btn" onclick="addSection()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>New H1 Section</button>
+    <button class="sb-btn" onclick="insertHeading(2)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10"/></svg>H2 Subsection</button>
+    <button class="sb-btn" onclick="openFigModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>Figure</button>
+    <button class="sb-btn" onclick="openChartModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/><line x1="2" y1="20" x2="22" y2="20"/></svg>Chart / Graph</button>
+    <button class="sb-btn" onclick="openEqModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>Equation</button>
+    <button class="sb-btn" onclick="openTableModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="12" y1="3" x2="12" y2="21"/></svg>Table</button>
+  </div></div>
+  <div class="sb-section"><div class="sb-label">Paper Stats</div><div class="stats-grid">
+    <div class="stat-card"><div class="stat-val" id="statWords">0</div><div class="stat-lbl">Words</div></div>
+    <div class="stat-card"><div class="stat-val" id="statSections">0</div><div class="stat-lbl">Sections</div></div>
+    <div class="stat-card"><div class="stat-val" id="statRefs">0</div><div class="stat-lbl">Refs</div></div>
+    <div class="stat-card"><div class="stat-val" id="statFigs">0</div><div class="stat-lbl">Figures</div></div>
+  </div></div>
+</aside>
+<main class="editor-area" id="editorArea">
+  <div class="paper-sheet" id="paperSheet">
+    <div class="paper-hdr" id="anchor-title">
+      <textarea class="paper-title-ta" id="paperTitle" placeholder="Paper Title" rows="2" oninput="autoResize(this);updateOutline()"></textarea>
+      <div class="authors-area">
+        <div class="authors-list" id="authorsList"></div>
+        <button class="add-author-btn" onclick="addAuthor()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:11px;height:11px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Author</button>
+      </div>
+    </div>
+    <div class="paper-body">
+      <div class="abstract-wrap" id="anchor-abstract">
+        <div class="abstract-inline"><span class="abstract-lbl">Abstract</span><span class="abstract-ed" contenteditable="true" id="abstractEd" data-ph="Write a concise abstract (150&#8211;250 words) summarising objectives, methodology, results, and conclusions." oninput="updateStats();updateAbstractWC()"></span></div>
+        <div class="abstract-wc" id="abstractWC">0 / 250 words</div>
+      </div>
+      <div class="kw-row">
+        <span class="kw-lbl">Index Terms</span>
+        <div class="kw-box" id="kwBox" onclick="document.getElementById('kwInput').focus()">
+          <input class="kw-input" id="kwInput" placeholder="Add term, press Enter&#8230;" onkeydown="handleKW(event)">
+        </div>
+      </div>
+      <div id="sectionsContainer"></div>
+      <div class="refs-section" id="anchor-refs">
+        <div class="refs-heading">References</div>
+        <div id="refsList"><div class="empty-st" id="refsEmpty"><div class="empty-st-icon">&#128218;</div><div class="empty-st-txt">No references yet &#8212; add them in the References panel &#8594;</div></div></div>
+      </div>
+    </div>
+  </div>
+</main>
+<aside class="panel-right">
+  <div class="pn-tabs">
+    <button class="pn-tab on" id="ptab-refs" onclick="switchTab('refs')">References</button>
+    <button class="pn-tab" id="ptab-figures" onclick="switchTab('figures')">Figures</button>
+    <button class="pn-tab" id="ptab-export" onclick="switchTab('export')">Export</button>
+  </div>
+  <div class="pn-content">
+    <div class="pn-tabpane on" id="pane-refs">
+      <button class="add-ref-btn" onclick="openRefModal()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>Add Reference</button>
+      <div class="bibtex-wrap"><div class="bibtex-lbl">Import BibTeX</div><textarea class="finput ta" id="bibtexIn" placeholder="Paste @article{...} entries" style="font-size:11px;font-family:monospace;min-height:70px;margin-top:5px;"></textarea><button class="btn-pri full" style="margin-top:6px;padding:7px;" onclick="parseBibtex()">Import</button></div>
+      <div style="font-size:10px;opacity:.5;margin-bottom:8px;line-height:1.5">Numbered [1],[2]&#8230; in order of first appearance, not alphabetically.</div>
+      <div class="ref-cards" id="refCards"></div>
+    </div>
+    <div class="pn-tabpane" id="pane-figures"><div class="fig-cards" id="figCards"><div class="empty-st"><div class="empty-st-icon">&#128444;&#65039;</div><div class="empty-st-txt">No figures yet.</div></div></div></div>
+    <div class="pn-tabpane" id="pane-export">
+      <div class="exp-card"><div class="sb-label">PDF Export</div><p>Exports as IEEE two-column (Times New Roman 10pt body, 8pt refs, 0.75&#8221;/0.625&#8221; margins). Choose <em>Save as PDF</em>.</p><button class="btn-pri full" onclick="exportPDF()">&#128196; Export PDF</button></div>
+      <div class="exp-card"><div class="sb-label">Save HTML</div><p>Portable file preserving all content, references, and figures.</p><button class="btn-sec full" onclick="exportHTML()">&#128190; Save HTML</button></div>
+      <div class="exp-card"><div class="sb-label">Copy References</div><p>All IEEE-formatted references (appearance order) to clipboard.</p><button class="btn-sec full" onclick="copyRefs()">&#128203; Copy</button></div>
+      <div class="exp-card"><div class="sb-label">Stats</div><div class="stats-grid">
+        <div class="stat-card"><div class="stat-val" id="xWords">0</div><div class="stat-lbl">Words</div></div>
+        <div class="stat-card"><div class="stat-val" id="xRefs">0</div><div class="stat-lbl">Refs</div></div>
+        <div class="stat-card"><div class="stat-val" id="xFigs">0</div><div class="stat-lbl">Figures</div></div>
+        <div class="stat-card"><div class="stat-val" id="xSecs">0</div><div class="stat-lbl">Sections</div></div>
+      </div></div>
+    </div>
+  </div>
+</aside>
+</div></div>
+
+<!-- Inline toolbar -->
+<div class="inline-tb" id="inlineTb">
+  <button class="tb-btn" onclick="fmt('bold')"><b>B</b></button>
+  <button class="tb-btn" onclick="fmt('italic')"><i>I</i></button>
+  <button class="tb-btn" onclick="fmt('underline')"><u>U</u></button>
+  <button class="tb-btn" onclick="fmt('superscript')" style="font-size:10px">x&sup2;</button>
+  <button class="tb-btn" onclick="fmt('subscript')" style="font-size:10px">x&#8322;</button>
+  <button class="tb-btn" onclick="openCitePicker()" style="font-size:11px;font-weight:700">[n]</button>
+</div>
+<!-- REFERENCE MODAL -->
+<div class="modal-ov" id="refModal"><div class="modal">
+  <div class="modal-hdr"><div class="modal-title" id="refModalTitle">Add Reference</div><button class="modal-x" onclick="closeModal('refModal')">&#10005;</button></div>
+  <div class="modal-body">
+    <div class="fg"><label class="flbl">Type</label><select class="finput sel" id="refType" onchange="updateRefFields()"><option value="journal">Journal Article</option><option value="conference">Conference Paper</option><option value="book">Book</option><option value="website">Website / Online</option><option value="thesis">Thesis / Dissertation</option><option value="techreport">Technical Report</option></select></div>
+    <div class="fg"><label class="flbl">Authors (press Enter or comma after each)</label><div class="atags" id="atagsCont" onclick="document.getElementById('atagIn').focus()"><input class="atag-in" id="atagIn" placeholder="e.g. J. Smith" onkeydown="handleAtag(event)" oninput="updateRefPreview()"></div></div>
+    <div class="fg"><label class="flbl">Title</label><input class="finput" id="refTitle" placeholder="Title of the work" oninput="updateRefPreview()"></div>
+    <div id="refDynFields"></div>
+    <div class="frow"><div class="fg"><label class="flbl">Year</label><input class="finput" id="refYear" placeholder="2024" maxlength="4" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">DOI (optional)</label><input class="finput" id="refDOI" placeholder="10.xxxx/xxxxx" oninput="updateRefPreview()"></div></div>
+    <div class="fg"><label class="flbl">Preview</label><div class="preview-box" id="refPreview"></div></div>
+  </div>
+  <div class="modal-foot"><button class="btn-sec" onclick="closeModal('refModal')">Cancel</button><button class="btn-pri" onclick="saveRef()">Save Reference</button></div>
+</div></div>
+<!-- CITATION PICKER -->
+<div class="modal-ov" id="citeModal"><div class="modal" style="max-width:440px">
+  <div class="modal-hdr"><div class="modal-title">Insert Citation</div><button class="modal-x" onclick="closeModal('citeModal')">&#10005;</button></div>
+  <div class="modal-body">
+    <div style="font-size:10px;opacity:.6;margin-bottom:8px">Citations are numbered [1],[2]&#8230; in order of first appearance in the text.</div>
+    <input class="finput" id="citeSearch" placeholder="Search by title or author&#8230;" oninput="renderCiteList()" style="margin-bottom:10px">
+    <div class="cite-list" id="citeList"></div>
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px"><button class="btn-sec full" onclick="closeModal('citeModal');openRefModal()">+ Add New Reference</button></div>
+  </div>
+</div></div>
+<!-- FIGURE MODAL -->
+<div class="modal-ov" id="figModal"><div class="modal" style="max-width:500px">
+  <div class="modal-hdr"><div class="modal-title">Insert Figure</div><button class="modal-x" onclick="closeModal('figModal')">&#10005;</button></div>
+  <div class="modal-body">
+    <div class="upload-area" id="figUpload" onclick="document.getElementById('figFileIn').click()" ondrop="handleFigDrop(event)" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')"><div class="upload-icon">&#128444;&#65039;</div><div class="upload-txt">Click or drag &amp; drop image here</div><div style="font-size:10px;opacity:.4;margin-top:5px">PNG, JPG, GIF, SVG, WebP</div></div>
+    <input type="file" id="figFileIn" accept="image/*" style="display:none" onchange="handleFigFile(event)">
+    <div id="figPreviewArea" style="display:none;margin-top:12px">
+      <img id="figPreviewImg" style="max-width:100%;border-radius:var(--rsm);margin-bottom:10px;max-height:200px;object-fit:contain;width:100%">
+      <div class="fg"><label class="flbl">Caption (8pt, appears below figure as "Fig. N. Caption")</label><input class="finput" id="figCaption" placeholder="Caption text&#8230;"></div>
+      <div class="fg"><label class="flbl">Width</label><select class="finput sel" id="figWidth"><option value="100%">Full column width</option><option value="80%">80% of column</option><option value="60%">60% of column</option><option value="span2">Span both columns (full page width)</option></select></div>
+    </div>
+  </div>
+  <div class="modal-foot"><button class="btn-sec" onclick="closeModal('figModal')">Cancel</button><button class="btn-pri" id="insertFigBtn" onclick="insertFig()" disabled>Insert Figure</button></div>
+</div></div>
+<!-- TABLE MODAL -->
+<div class="modal-ov" id="tableModal"><div class="modal" style="max-width:460px">
+  <div class="modal-hdr"><div class="modal-title">Insert Table</div><button class="modal-x" onclick="closeModal('tableModal')">&#10005;</button></div>
+  <div class="modal-body">
+    <div class="frow"><div class="fg"><label class="flbl">Rows</label><input class="finput" id="tblRows" type="number" value="3" min="1" max="20"></div><div class="fg"><label class="flbl">Columns</label><input class="finput" id="tblCols" type="number" value="3" min="1" max="10"></div></div>
+    <div class="fg"><label class="flbl">Caption (8pt small-caps, appears ABOVE table as "TABLE I.")</label><input class="finput" id="tblCaption" placeholder="Table caption&#8230;"></div>
+    <div class="fg"><label class="flbl">Column Headers (comma-separated)</label><input class="finput" id="tblHeaders" placeholder="Method, Accuracy, F1 Score"></div>
+  </div>
+  <div class="modal-foot"><button class="btn-sec" onclick="closeModal('tableModal')">Cancel</button><button class="btn-pri" onclick="insertTable()">Insert Table</button></div>
+</div></div>
+<!-- EQUATION MODAL -->
+<div class="modal-ov" id="eqModal"><div class="modal" style="max-width:500px">
+  <div class="modal-hdr"><div class="modal-title">Insert Equation</div><button class="modal-x" onclick="closeModal('eqModal')">&#10005;</button></div>
+  <div class="modal-body">
+    <div class="fg"><label class="flbl">LaTeX Expression</label><input class="finput" id="eqInput" placeholder="e.g.  E = mc^2  or  \frac{-b \pm \sqrt{b^2-4ac}}{2a}" oninput="previewEq()"></div>
+    <div style="background:var(--s2);border-radius:var(--rsm);padding:16px;min-height:64px;text-align:center;margin-bottom:12px"><div id="eqPreview" style="font-size:1.3rem"></div></div>
+    <div class="fg"><label class="flbl">Label (optional)</label><input class="finput" id="eqLabel" placeholder="e.g. Energy-mass equivalence"></div>
+  </div>
+  <div class="modal-foot"><button class="btn-sec" onclick="closeModal('eqModal')">Cancel</button><button class="btn-pri" onclick="insertEq()">Insert Equation</button></div>
+</div></div>
+<!-- CHART MODAL -->
+<div class="modal-ov" id="chartModal"><div class="modal" style="max-width:620px">
+  <div class="modal-hdr"><div class="modal-title">Insert Chart / Graph</div><button class="modal-x" onclick="closeModal('chartModal')">&#10005;</button></div>
+  <div class="modal-body">
+    <div class="fg"><label class="flbl">Chart Type</label><div class="chart-type-btns" id="chartTypeBtns">
+      <button class="chart-type-btn on" data-ctype="bar" onclick="selectChartType('bar',this)">&#128202; Bar</button>
+      <button class="chart-type-btn" data-ctype="line" onclick="selectChartType('line',this)">&#128200; Line</button>
+      <button class="chart-type-btn" data-ctype="scatter" onclick="selectChartType('scatter',this)">&#11044; Scatter</button>
+      <button class="chart-type-btn" data-ctype="pie" onclick="selectChartType('pie',this)">&#129383; Pie</button>
+      <button class="chart-type-btn" data-ctype="radar" onclick="selectChartType('radar',this)">&#128376; Radar</button>
+    </div></div>
+    <div class="frow"><div class="fg"><label class="flbl">Chart Title (optional)</label><input class="finput" id="chartTitle" placeholder="e.g. Accuracy vs. Epochs" oninput="scheduleChartPreview()"></div><div class="fg"><label class="flbl">Figure Caption</label><input class="finput" id="chartCaption" placeholder="Caption for the figure"></div></div>
+    <div class="frow" id="chartAxisLabels"><div class="fg"><label class="flbl">X-Axis Label</label><input class="finput" id="chartXLabel" placeholder="e.g. Epoch" oninput="scheduleChartPreview()"></div><div class="fg"><label class="flbl">Y-Axis Label</label><input class="finput" id="chartYLabel" placeholder="e.g. Accuracy (%)" oninput="scheduleChartPreview()"></div></div>
+    <div class="fg"><label class="flbl">Data <span id="chartDataHint" style="opacity:.5;text-transform:none;letter-spacing:0;font-weight:400">&#8212; Label, Value per row</span></label><textarea class="finput ta" id="chartData" placeholder="Category A, 85&#10;Category B, 72&#10;Category C, 91&#10;Category D, 68" style="min-height:90px;font-family:monospace;font-size:12px" oninput="scheduleChartPreview()"></textarea></div>
+    <div class="fg" style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <label style="display:flex;align-items:center;gap:6px;font-size:var(--txs);cursor:pointer"><input type="checkbox" id="chartGrayscale" onchange="scheduleChartPreview()"> Grayscale (IEEE-safe)</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:var(--txs);cursor:pointer"><input type="checkbox" id="chartShowLegend" onchange="scheduleChartPreview()"> Legend</label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:var(--txs);cursor:pointer"><input type="checkbox" id="chartFill" onchange="scheduleChartPreview()"> Fill area</label>
+      <button class="btn-sec" style="padding:5px 10px;font-size:var(--txs)" onclick="scheduleChartPreview()">&#8635; Preview</button>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:var(--rsm);padding:10px;text-align:center;min-height:160px;display:flex;align-items:center;justify-content:center">
+      <canvas id="chartCanvas" width="480" height="260" style="max-width:100%"></canvas>
+    </div>
+  </div>
+  <div class="modal-foot"><button class="btn-sec" onclick="closeModal('chartModal')">Cancel</button><button class="btn-pri" onclick="insertChart()">Insert as Figure</button></div>
+</div></div>
+<div class="toasts" id="toasts"></div>
+<script>
+const S={refs:[],figs:[],authorTags:[],editRefId:null,savedRange:null,tableCount:0,eqCount:0};
+const keywords=[];
+const ROMAN=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+const uid=()=>Math.random().toString(36).slice(2,9);
+const toRoman=n=>ROMAN[n-1]||String(n);
+const gv=id=>{const e=document.getElementById(id);return e?e.value.trim():'';};
+let currentChartType='bar',chartPreviewTimer=null,chartInstance=null;
+
+document.addEventListener('DOMContentLoaded',()=>{
+  if(window.__SAVED_STATE__){const ss=window.__SAVED_STATE__;if(ss.theme)document.documentElement.setAttribute('data-theme',ss.theme);if(ss.refs){S.refs=ss.refs;renderRefs();}if(ss.figs){S.figs=ss.figs;renderFigsPanel();}if(ss.keywords)ss.keywords.forEach(k=>keywords.push(k));renderKW();updateCiteNums();}
+  if(!document.querySelector('.paper-section')){['Introduction','Related Work','Methodology','Results and Discussion','Conclusion'].forEach(t=>addSection(t));}
+  else{document.querySelectorAll('.paper-section').forEach(s=>{sectionCount=Math.max(sectionCount,parseInt(s.dataset.sn||0));});}
+  addAuthor();updateOutline();updateStats();updateRefFields();
+  document.addEventListener('selectionchange',onSelChange);
+  document.addEventListener('mousedown',e=>{if(!e.target.closest('#inlineTb'))hideInlineTb();});
+  document.addEventListener('keydown',globalKeys);
+  setInterval(updateStats,3000);
+});
+
+function toggleTheme(){const h=document.documentElement,dark=h.getAttribute('data-theme')==='dark';h.setAttribute('data-theme',dark?'light':'dark');document.getElementById('themeIcon').textContent=dark?'\u2600\uFE0F':'\uD83C\uDF19';}
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('closed');}
+function switchTab(n){document.querySelectorAll('.pn-tab').forEach(t=>t.classList.remove('on'));document.querySelectorAll('.pn-tabpane').forEach(p=>p.classList.remove('on'));document.getElementById('ptab-'+n).classList.add('on');document.getElementById('pane-'+n).classList.add('on');}
+
+function addAuthor(){const id=uid(),list=document.getElementById('authorsList'),div=document.createElement('div');div.className='author-entry';div.id='au-'+id;div.innerHTML=`<div class="author-fields"><input class="p-input" placeholder="Given Name Surname" data-au-first><input class="p-input" placeholder="Second B. Author" data-au-last><input class="p-input full" placeholder="dept. name, Institution, City, Country" data-au-affil><input class="p-input full" placeholder="email@example.com or ORCID" data-au-email></div><button class="btn-icon" onclick="removeAuthor('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;list.appendChild(div);}
+function removeAuthor(id){const el=document.getElementById('au-'+id);if(el&&document.getElementById('authorsList').children.length>1)el.remove();}
+
+function handleKW(e){const inp=document.getElementById('kwInput');if(e.key==='Enter'||e.key===','){e.preventDefault();const v=inp.value.replace(/,$/,'').trim();if(v&&!keywords.includes(v)){keywords.push(v);renderKW();}inp.value='';}else if(e.key==='Backspace'&&inp.value===''&&keywords.length>0){keywords.pop();renderKW();}}
+function removeKW(v){const i=keywords.indexOf(v);if(i>-1){keywords.splice(i,1);renderKW();}}
+function renderKW(){const box=document.getElementById('kwBox'),inp=document.getElementById('kwInput');box.innerHTML='';keywords.forEach(k=>{const t=document.createElement('span');t.className='kw-tag';t.innerHTML=`${k}<button class="kw-x" onclick="removeKW('${k.replace(/'/g,"\\'")}')">&#10005;</button>`;box.appendChild(t);});box.appendChild(inp);}
+
+let sectionCount=0;
+function addSection(defaultTitle=''){
+  sectionCount++;
+  const id=uid(),num=sectionCount,container=document.getElementById('sectionsContainer'),div=document.createElement('div');
+  div.className='paper-section';div.id='sec-'+id;div.dataset.sid=id;div.dataset.sn=num;
+  div.innerHTML=`<div class="sec-ctrls"><button class="btn-icon" onclick="secUp('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><polyline points="18 15 12 9 6 15"/></svg></button><button class="btn-icon" onclick="secDown('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><polyline points="6 9 12 15 18 9"/></svg></button><button class="btn-icon" onclick="secDel('${id}')" style="color:var(--accent)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:10px;height:10px"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg></button></div><div class="sec-hdr"><span class="sec-num">${toRoman(num)}.</span><input class="sec-title-in" value="${defaultTitle}" placeholder="Section Title" oninput="updateOutline()"></div><div class="sec-body" contenteditable="true" data-ph="Start writing&#8230; (10pt Times New Roman, justified, 0.2in first-line indent per IEEE)" oninput="updateStats()" onmouseup="onEditorSel()" onkeyup="onEditorSel()"></div>`;
+  container.appendChild(div);updateOutline();updateStats();
+  setTimeout(()=>div.querySelector('.sec-body').focus(),60);
+  return div;
+}
+function renumberSections(){document.querySelectorAll('.paper-section').forEach((s,i)=>{const n=s.querySelector('.sec-num');if(n)n.textContent=toRoman(i+1)+'.';s.dataset.sn=i+1;});sectionCount=document.querySelectorAll('.paper-section').length;}
+function secDel(id){const el=document.getElementById('sec-'+id);if(el){el.remove();renumberSections();updateOutline();updateStats();}}
+function secUp(id){const el=document.getElementById('sec-'+id);if(el&&el.previousElementSibling){el.parentNode.insertBefore(el,el.previousElementSibling);renumberSections();updateOutline();}}
+function secDown(id){const el=document.getElementById('sec-'+id);if(el&&el.nextElementSibling){el.parentNode.insertBefore(el.nextElementSibling,el);renumberSections();updateOutline();}}
+
+function insertHeading(level){
+  saveRange();restoreRange();
+  const cls={2:'ieee-h2',3:'ieee-h3',4:'ieee-h4'}[level]||'ieee-h2';
+  const ph={2:'A. Subsection Title',3:'1) Sub-subsection heading:',4:'a) Paragraph heading:'}[level]||'Heading';
+  document.execCommand('insertHTML',false,`<div class="${cls}" contenteditable="true">${ph}</div>`);
+}
+
+function updateOutline(){
+  const list=document.getElementById('outlineList');list.innerHTML='';
+  const oi=(text,anchor,color)=>{const li=document.createElement('li');li.innerHTML=`<div class="outline-item"><div class="odot" style="background:${color}"></div>${text}</div>`;li.querySelector('.outline-item').addEventListener('click',()=>{const t=document.getElementById(anchor);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});list.querySelectorAll('.outline-item').forEach(i=>i.classList.remove('active'));li.querySelector('.outline-item').classList.add('active');});list.appendChild(li);};
+  oi('Title','anchor-title','var(--primary)');oi('Abstract','anchor-abstract','var(--secondary)');
+  document.querySelectorAll('.paper-section').forEach((s,i)=>{const t=s.querySelector('.sec-title-in')?.value||`Section ${i+1}`;oi(`${toRoman(i+1)}. ${t}`,'sec-'+s.dataset.sid,'var(--accent)');});
+  oi('References','anchor-refs','var(--primary)');
+}
+
+function wc(t){return t.trim().split(/\s+/).filter(w=>w.length>0).length;}
+function allText(){let t=document.getElementById('paperTitle').value+' ';document.querySelectorAll('[contenteditable="true"]').forEach(e=>t+=e.innerText+' ');document.querySelectorAll('.sec-title-in').forEach(e=>t+=e.value+' ');return t;}
+function updateStats(){
+  const count=wc(allText());
+  document.getElementById('wcDisplay').textContent=count.toLocaleString()+' words';
+  ['statWords','xWords'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=count.toLocaleString();});
+  const secs=document.querySelectorAll('.paper-section').length;
+  ['statSections','xSecs'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=secs;});
+  ['statRefs','xRefs'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=S.refs.length;});
+  ['statFigs','xFigs'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=S.figs.length;});
+}
+function updateAbstractWC(){const c=wc(document.getElementById('abstractEd').innerText);const el=document.getElementById('abstractWC');el.textContent=`${c} / 250 words`;el.style.color=c>250?'var(--accent)':'';}
+
+function fmt(cmd){document.execCommand(cmd,false,null);updateFmtBtns();}
+function updateFmtBtns(){['bold','italic','underline'].forEach(cmd=>{const b=document.getElementById(cmd+'Btn');if(b)b.classList.toggle('on',document.queryCommandState(cmd));});}
+function onSelChange(){setTimeout(()=>{const sel=window.getSelection();if(sel&&sel.rangeCount>0&&!sel.isCollapsed){const r=sel.getRangeAt(0);const node=r.commonAncestorContainer;const inEdit=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(inEdit){showInlineTb(r);updateFmtBtns();}else hideInlineTb();}else hideInlineTb();},15);}
+function onEditorSel(){onSelChange();}
+function showInlineTb(r){const tb=document.getElementById('inlineTb');const rect=r.getBoundingClientRect();tb.style.top=(rect.top-46)+'px';tb.style.left=(rect.left+rect.width/2-80)+'px';tb.classList.add('show');}
+function hideInlineTb(){document.getElementById('inlineTb').classList.remove('show');}
+function globalKeys(e){if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();exportHTML();}if((e.ctrlKey||e.metaKey)&&e.key==='p'){e.preventDefault();exportPDF();}if(e.key==='Escape')document.querySelectorAll('.modal-ov.open').forEach(m=>m.classList.remove('open'));}
+
+const REF_TEMPLATES={
+  journal:`<div class="fg"><label class="flbl">Journal Name</label><input class="finput" id="rfJournal" placeholder="IEEE Trans. Neural Netw. Learn. Syst." oninput="updateRefPreview()"></div><div class="frow"><div class="fg"><label class="flbl">Volume</label><input class="finput" id="rfVol" placeholder="10" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Number</label><input class="finput" id="rfNum" placeholder="3" oninput="updateRefPreview()"></div></div><div class="frow"><div class="fg"><label class="flbl">Pages</label><input class="finput" id="rfPages" placeholder="123&#8211;134" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Month (opt.)</label><input class="finput" id="rfMonth" placeholder="Jan." oninput="updateRefPreview()"></div></div>`,
+  conference:`<div class="fg"><label class="flbl">Conference</label><input class="finput" id="rfConf" placeholder="in Proc. IEEE CVPR" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Location</label><input class="finput" id="rfLoc" placeholder="Seattle, WA, USA" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Pages</label><input class="finput" id="rfPages" placeholder="1234&#8211;1243" oninput="updateRefPreview()"></div>`,
+  book:`<div class="fg"><label class="flbl">Publisher</label><input class="finput" id="rfPub" placeholder="IEEE Press" oninput="updateRefPreview()"></div><div class="frow"><div class="fg"><label class="flbl">City, State</label><input class="finput" id="rfLoc" placeholder="Piscataway, NJ" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Edition (opt.)</label><input class="finput" id="rfEd" placeholder="3rd" oninput="updateRefPreview()"></div></div>`,
+  website:`<div class="fg"><label class="flbl">Source Name</label><input class="finput" id="rfSrc" placeholder="arXiv" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">URL</label><input class="finput" id="rfURL" placeholder="https://..." oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">Accessed Date</label><input class="finput" id="rfAccess" placeholder="Jan. 15, 2024" oninput="updateRefPreview()"></div>`,
+  thesis:`<div class="frow"><div class="fg"><label class="flbl">Degree</label><select class="finput sel" id="rfDeg" onchange="updateRefPreview()"><option>Ph.D.</option><option>M.S.</option><option>B.S.</option></select></div><div class="fg"><label class="flbl">Department</label><input class="finput" id="rfDept" placeholder="Dept. Elect. Eng." oninput="updateRefPreview()"></div></div><div class="frow"><div class="fg"><label class="flbl">University</label><input class="finput" id="rfUniv" placeholder="MIT" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">City</label><input class="finput" id="rfLoc" placeholder="Cambridge, MA" oninput="updateRefPreview()"></div></div>`,
+  techreport:`<div class="fg"><label class="flbl">Institution</label><input class="finput" id="rfInst" placeholder="IEEE" oninput="updateRefPreview()"></div><div class="frow"><div class="fg"><label class="flbl">Report No.</label><input class="finput" id="rfRepNo" placeholder="TR-2024-01" oninput="updateRefPreview()"></div><div class="fg"><label class="flbl">City (opt.)</label><input class="finput" id="rfLoc" placeholder="New York, NY" oninput="updateRefPreview()"></div></div>`,
+};
+function fmtRefStr(type,authors,title,f,year,doi){
+  const au=authors.length>1?authors.slice(0,-1).join(', ')+' and '+authors[authors.length-1]:(authors[0]||'Author');
+  let s='';
+  switch(type){
+    case 'journal':s=`${au}, "${title}," <em>${f.journal||'Journal'}</em>`;if(f.vol)s+=`, vol. ${f.vol}`;if(f.num)s+=`, no. ${f.num}`;if(f.pages)s+=`, pp. ${f.pages}`;if(f.month)s+=`, ${f.month}`;if(year)s+=` ${year}`;if(doi)s+=`, doi: ${doi}`;s+='.';break;
+    case 'conference':s=`${au}, "${title}," <em>${f.conf||'Conference'}</em>`;if(f.loc)s+=`, ${f.loc}`;if(year)s+=`, ${year}`;if(f.pages)s+=`, pp. ${f.pages}`;s+='.';break;
+    case 'book':s=`${au}, <em>${title}</em>`;if(f.ed)s+=`, ${f.ed} ed.`;if(f.loc)s+=` ${f.loc}:`;if(f.pub)s+=` ${f.pub}`;if(year)s+=`, ${year}`;s+='.';break;
+    case 'website':s=`${au}, "${title}," <em>${f.src||'Source'}</em>. Accessed: ${f.access||year}. [Online]. Available: ${f.url||'URL'}`;break;
+    case 'thesis':s=`${au}, "${title}," ${f.deg||'Ph.D.'} dissertation`;if(f.dept)s+=`, ${f.dept}`;if(f.univ)s+=`, ${f.univ}`;if(f.loc)s+=`, ${f.loc}`;if(year)s+=`, ${year}`;s+='.';break;
+    case 'techreport':s=`${au}, "${title}," ${f.inst||'Institution'}`;if(f.repno)s+=`, Tech. Rep. ${f.repno}`;if(f.loc)s+=`, ${f.loc}`;if(year)s+=`, ${year}`;s+='.';break;
+    default:s=`${au}, "${title}," ${year}.`;
+  }
+  return s;
+}
+function collectRefFields(type){const map={journal:{journal:'rfJournal',vol:'rfVol',num:'rfNum',pages:'rfPages',month:'rfMonth'},conference:{conf:'rfConf',loc:'rfLoc',pages:'rfPages'},book:{pub:'rfPub',loc:'rfLoc',ed:'rfEd'},website:{src:'rfSrc',url:'rfURL',access:'rfAccess'},thesis:{deg:'rfDeg',dept:'rfDept',univ:'rfUniv',loc:'rfLoc'},techreport:{inst:'rfInst',repno:'rfRepNo',loc:'rfLoc'}};const fields={};Object.entries(map[type]||{}).forEach(([k,eid])=>{fields[k]=gv(eid);});return fields;}
+
+function openRefModal(editId=null){S.editRefId=editId;S.authorTags=[];document.getElementById('refType').value='journal';['refTitle','refYear','refDOI'].forEach(id=>{document.getElementById(id).value='';});document.getElementById('atagsCont').innerHTML='<input class="atag-in" id="atagIn" placeholder="e.g. J. Smith" onkeydown="handleAtag(event)" oninput="updateRefPreview()">';if(editId){const ref=S.refs.find(r=>r.id===editId);if(ref){document.getElementById('refType').value=ref.type;document.getElementById('refTitle').value=ref.title||'';document.getElementById('refYear').value=ref.year||'';document.getElementById('refDOI').value=ref.doi||'';S.authorTags=[...(ref.authors||[])];document.getElementById('refModalTitle').textContent='Edit Reference';}}else document.getElementById('refModalTitle').textContent='Add Reference';renderAtags();updateRefFields();openModal('refModal');}
+function handleAtag(e){const inp=document.getElementById('atagIn');if(e.key==='Enter'||e.key===','){e.preventDefault();const v=inp.value.replace(/,$/,'').trim();if(v){S.authorTags.push(v);renderAtags();updateRefPreview();}}else if(e.key==='Backspace'&&inp.value===''&&S.authorTags.length>0){S.authorTags.pop();renderAtags();updateRefPreview();}}
+function removeAtag(i){S.authorTags.splice(i,1);renderAtags();updateRefPreview();}
+function renderAtags(){const c=document.getElementById('atagsCont');c.innerHTML='';S.authorTags.forEach((a,i)=>{const t=document.createElement('span');t.className='atag';t.innerHTML=`${a}<button onclick="removeAtag(${i})">&#10005;</button>`;c.appendChild(t);});const inp=document.createElement('input');inp.className='atag-in';inp.id='atagIn';inp.placeholder=S.authorTags.length===0?'e.g. J. Smith':'Add author\u2026';inp.setAttribute('onkeydown','handleAtag(event)');inp.addEventListener('input',updateRefPreview);c.appendChild(inp);}
+function updateRefFields(){const type=document.getElementById('refType').value;document.getElementById('refDynFields').innerHTML=REF_TEMPLATES[type]||'';updateRefPreview();}
+function updateRefPreview(){const type=document.getElementById('refType').value;const authors=S.authorTags.length>0?S.authorTags:['Author'];document.getElementById('refPreview').innerHTML='[n] '+fmtRefStr(type,authors,gv('refTitle')||'Title',collectRefFields(type),gv('refYear')||'Year',gv('refDOI'));}
+function saveRef(){const type=document.getElementById('refType').value,authors=[...S.authorTags];const ai=document.getElementById('atagIn');if(ai?.value.trim())authors.push(ai.value.trim());const title=gv('refTitle'),year=gv('refYear'),doi=gv('refDOI'),fields=collectRefFields(type);if(!title){toast('Please enter a title.','err');return;}if(!authors.length){toast('Please add at least one author.','err');return;}if(S.editRefId){const i=S.refs.findIndex(r=>r.id===S.editRefId);if(i>-1)S.refs[i]={...S.refs[i],type,authors,title,year,doi,...fields};toast('Reference updated!');}else{S.refs.push({id:uid(),type,authors,title,year,doi,...fields});toast('Reference added!');}closeModal('refModal');renderRefs();updateCiteNums();updateStats();}
+function deleteRef(id){S.refs=S.refs.filter(r=>r.id!==id);renderRefs();updateCiteNums();updateStats();toast('Reference removed.','inf');}
+function getRefIdx(id){return S.refs.findIndex(r=>r.id===id)+1;}
+function renderRefs(){
+  const list=document.getElementById('refsList'),cards=document.getElementById('refCards');
+  if(!S.refs.length){list.innerHTML='<div class="empty-st" id="refsEmpty"><div class="empty-st-icon">&#128218;</div><div class="empty-st-txt">No references yet.</div></div>';cards.innerHTML='<div class="empty-st"><div class="empty-st-icon">&#128218;</div><div class="empty-st-txt">No references yet.</div></div>';return;}
+  list.innerHTML='';cards.innerHTML='';
+  S.refs.forEach((ref,i)=>{
+    const num=i+1,fmtd=fmtRefStr(ref.type,ref.authors,ref.title,ref,ref.year,ref.doi);
+    const item=document.createElement('div');item.className='ref-item';item.id='rdisp-'+ref.id;item.dataset.rid=ref.id;item.innerHTML=`<span class="ref-num">[${num}]</span><span>${fmtd}</span>`;item.addEventListener('click',()=>hlCites(ref.id));list.appendChild(item);
+    const card=document.createElement('div');card.className='ref-card';card.id='rcard-'+ref.id;const shortAu=ref.authors?.[0]?ref.authors[0]+(ref.authors.length>1?' et al.':''):'&#8212;';card.innerHTML=`<div class="rc-num">[${num}]</div><div class="rc-title">${ref.title}</div><div class="rc-meta">${shortAu} &middot; ${ref.year||'&#8212;'} &middot; ${ref.type}</div><div class="rc-actions"><button class="rc-btn" onclick="insertCiteById('${ref.id}')">Cite</button><button class="rc-btn" onclick="openRefModal('${ref.id}')">Edit</button><button class="rc-btn del" onclick="deleteRef('${ref.id}')">Remove</button></div>`;cards.appendChild(card);
+  });
+}
+function saveRange(){const sel=window.getSelection();if(sel?.rangeCount>0)S.savedRange=sel.getRangeAt(0).cloneRange();}
+function restoreRange(){if(S.savedRange){const sel=window.getSelection();sel.removeAllRanges();sel.addRange(S.savedRange);}}
+function openCitePicker(){saveRange();document.getElementById('citeSearch').value='';renderCiteList();openModal('citeModal');}
+function renderCiteList(){const q=document.getElementById('citeSearch').value.toLowerCase(),list=document.getElementById('citeList');list.innerHTML='';if(!S.refs.length){list.innerHTML='<div class="empty-st" style="padding:16px"><div class="empty-st-icon">&#128218;</div><div class="empty-st-txt">No references yet.</div></div>';return;}S.refs.filter(r=>!q||r.title?.toLowerCase().includes(q)||r.authors?.some(a=>a.toLowerCase().includes(q))).forEach(ref=>{const num=getRefIdx(ref.id),c=document.createElement('div');c.className='ref-card';c.style.cursor='pointer';c.innerHTML=`<div class="rc-num">[${num}]</div><div class="rc-title">${ref.title}</div><div class="rc-meta">${ref.authors?.[0]||''} &middot; ${ref.year||''}</div>`;c.addEventListener('click',()=>{insertCiteById(ref.id);closeModal('citeModal');});list.appendChild(c);});}
+function insertCiteById(refId){const num=getRefIdx(refId);if(!num)return;restoreRange();const span=document.createElement('span');span.className='cite';span.dataset.rid=refId;span.contentEditable='false';span.textContent=`[${num}]`;span.addEventListener('click',()=>hlRef(refId));const sel=window.getSelection();if(sel?.rangeCount>0){const r=sel.getRangeAt(0);r.collapse(false);r.insertNode(span);r.setStartAfter(span);r.collapse(true);sel.removeAllRanges();sel.addRange(r);}document.execCommand('insertText',false,'\u200B');}
+function updateCiteNums(){document.querySelectorAll('.cite').forEach(el=>{const idx=getRefIdx(el.dataset.rid);el.textContent=idx>0?`[${idx}]`:'[?]';el.style.color=idx>0?'':'var(--accent)';});}
+function hlRef(refId){const el=document.getElementById('rdisp-'+refId);if(el){el.scrollIntoView({behavior:'smooth',block:'center'});el.classList.add('lit');setTimeout(()=>el.classList.remove('lit'),2000);}const card=document.getElementById('rcard-'+refId);if(card){card.classList.add('lit');card.scrollIntoView({behavior:'smooth',block:'nearest'});setTimeout(()=>card.classList.remove('lit'),2000);}switchTab('refs');}
+function hlCites(refId){document.querySelectorAll('.cite.lit').forEach(e=>e.classList.remove('lit'));let first=null;document.querySelectorAll(`.cite[data-rid="${refId}"]`).forEach(e=>{e.classList.add('lit');if(!first)first=e;});if(first)first.scrollIntoView({behavior:'smooth',block:'center'});setTimeout(()=>document.querySelectorAll('.cite.lit').forEach(e=>e.classList.remove('lit')),2500);}
+
+function parseBibtex(){const raw=document.getElementById('bibtexIn').value.trim();if(!raw)return;let count=0;raw.split(/(?=@)/g).filter(e=>e.trim().startsWith('@')).forEach(entry=>{try{const tm=entry.match(/@(\w+)\s*\{/i);if(!tm)return;const bibType=tm[1].toLowerCase();const fields={};const fr=/(\w+)\s*=\s*[\{"]([^}"]+?)[\}"]/g;let m;while((m=fr.exec(entry))!==null)fields[m[1].toLowerCase()]=m[2].trim().replace(/\s+/g,' ');const typeMap={article:'journal',inproceedings:'conference',proceedings:'conference',book:'book',misc:'website',phdthesis:'thesis',mastersthesis:'thesis',techreport:'techreport'};const type=typeMap[bibType]||'journal';const authors=(fields.author||'').split(/\s+and\s+/i).map(a=>{const p=a.split(',');if(p.length>=2){const fn=p[1].trim().split(' ').map(n=>n[0]+'.').join(' ');return`${fn} ${p[0].trim()}`;}return a.trim();}).filter(Boolean);const ref={id:uid(),type,authors,title:fields.title||'',year:fields.year||'',doi:fields.doi||''};if(type==='journal'){ref.journal=fields.journal||'';ref.vol=fields.volume||'';ref.num=fields.number||'';ref.pages=fields.pages||'';ref.month=fields.month||'';}else if(type==='conference'){ref.conf=fields.booktitle||'';ref.loc=fields.address||'';ref.pages=fields.pages||'';}else if(type==='book'){ref.pub=fields.publisher||'';ref.loc=fields.address||'';ref.ed=fields.edition||'';}else if(type==='thesis'){ref.deg=bibType==='mastersthesis'?'M.S.':'Ph.D.';ref.univ=fields.school||'';ref.loc=fields.address||'';ref.dept=fields.department||'';}else if(type==='techreport'){ref.inst=fields.institution||'';ref.repno=fields.number||'';ref.loc=fields.address||'';}S.refs.push(ref);count++;}catch(err){}});renderRefs();updateCiteNums();updateStats();if(count>0){toast(`Imported ${count} reference${count>1?'s':''}!`);document.getElementById('bibtexIn').value='';}else toast('No valid BibTeX entries found.','err');}
+
+let pendingFigSrc=null,figCount=0;
+function openFigModal(){saveRange();pendingFigSrc=null;document.getElementById('figPreviewArea').style.display='none';document.getElementById('figUpload').style.display='';document.getElementById('figCaption').value='';document.getElementById('insertFigBtn').disabled=true;openModal('figModal');}
+function handleFigFile(e){const f=e.target.files[0];if(f)loadFig(f);}
+function handleFigDrop(e){e.preventDefault();e.currentTarget.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)loadFig(f);}
+function loadFig(file){const r=new FileReader();r.onload=e=>{pendingFigSrc=e.target.result;document.getElementById('figPreviewImg').src=pendingFigSrc;document.getElementById('figPreviewArea').style.display='';document.getElementById('figUpload').style.display='none';document.getElementById('insertFigBtn').disabled=false;};r.readAsDataURL(file);}
+function doInsertFigSrc(src,caption,width){figCount++;const id=uid(),label='Fig. '+figCount;S.figs.push({id,src,caption,num:figCount,label});const span=width==='span2';const cls=span?'ieee-fig span2':'ieee-fig';const w=span?'100%':width;const html=`<div class="${cls}" data-fid="${id}" contenteditable="false" style="width:${w};max-width:100%"><img src="${src}" alt="${label}" style="max-width:100%"><div class="ieee-fig-cap" data-lbl="${label}" contenteditable="true">${caption}</div></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){sel.getRangeAt(0).collapse(true);document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}renderFigsPanel();updateStats();toast(`${label} inserted!`);}
+function insertFig(){if(!pendingFigSrc)return;doInsertFigSrc(pendingFigSrc,document.getElementById('figCaption').value.trim()||'Figure caption.',document.getElementById('figWidth').value);closeModal('figModal');}
+function renderFigsPanel(){const panel=document.getElementById('figCards');panel.innerHTML='';if(!S.figs.length){panel.innerHTML='<div class="empty-st"><div class="empty-st-icon">&#128444;&#65039;</div><div class="empty-st-txt">No figures yet.</div></div>';return;}S.figs.forEach(fig=>{const c=document.createElement('div');c.className='fig-card';c.innerHTML=`<img src="${fig.src}" alt="${fig.label}"><div class="fig-card-b"><div class="fig-card-lbl">${fig.label}</div><div class="fig-card-cap">${fig.caption||'No caption'}</div></div>`;panel.appendChild(c);});}
+
+function openTableModal(){saveRange();openModal('tableModal');}
+function insertTable(){const rows=parseInt(document.getElementById('tblRows').value)||3,cols=parseInt(document.getElementById('tblCols').value)||3;const cap=document.getElementById('tblCaption').value.trim(),hStr=document.getElementById('tblHeaders').value.trim();const headers=hStr?hStr.split(',').map(h=>h.trim()):[];S.tableCount++;const lbl='Table '+toRoman(S.tableCount);const ths=Array.from({length:cols},(_,i)=>`<th contenteditable="true">${headers[i]||'Column '+(i+1)}</th>`).join('');const tds=Array.from({length:cols},()=>'<td contenteditable="true">&#8212;</td>').join('');const trows=Array.from({length:rows},()=>`<tr>${tds}</tr>`).join('');const html=`<div class="ieee-tbl-wrap" contenteditable="false"><div class="ieee-tbl-cap" contenteditable="true">${lbl}${cap?'. '+cap:''}</div><table class="ieee-tbl"><thead><tr>${ths}</tr></thead><tbody>${trows}</tbody></table></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}closeModal('tableModal');toast(`${lbl} inserted!`);}
+
+function openEqModal(){saveRange();document.getElementById('eqInput').value='';document.getElementById('eqPreview').innerHTML='';document.getElementById('eqLabel').value='';openModal('eqModal');}
+function previewEq(){const latex=document.getElementById('eqInput').value.trim(),prev=document.getElementById('eqPreview');if(!latex){prev.innerHTML='';return;}try{prev.innerHTML=window.katex?window.katex.renderToString(latex,{throwOnError:false,displayMode:true}):`<em>${latex}</em>`;}catch(e){prev.innerHTML='<span style="color:var(--accent)">Invalid LaTeX</span>';}}
+function insertEq(){const latex=document.getElementById('eqInput').value.trim();if(!latex)return;S.eqCount++;let rendered=`<em>${latex}</em>`;if(window.katex){try{rendered=window.katex.renderToString(latex,{throwOnError:false,displayMode:true});}catch(e){}}const html=`<div class="ieee-eq" contenteditable="false"><div class="ieee-eq-content">${rendered}</div><div class="ieee-eq-num">(${S.eqCount})</div></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}closeModal('eqModal');toast(`Equation (${S.eqCount}) inserted!`);}
+
+function openChartModal(){saveRange();currentChartType='bar';document.querySelectorAll('.chart-type-btn').forEach(b=>b.classList.remove('on'));document.querySelector('[data-ctype="bar"]').classList.add('on');['chartTitle','chartCaption','chartXLabel','chartYLabel'].forEach(id=>document.getElementById(id).value='');document.getElementById('chartData').value='Category A, 85\nCategory B, 72\nCategory C, 91\nCategory D, 68';document.getElementById('chartGrayscale').checked=false;document.getElementById('chartShowLegend').checked=false;document.getElementById('chartFill').checked=false;updateChartDataHint();openModal('chartModal');setTimeout(renderChartPreview,200);}
+function selectChartType(type,btn){currentChartType=type;document.querySelectorAll('.chart-type-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.getElementById('chartAxisLabels').style.display=(type==='pie')?'none':'';updateChartDataHint();scheduleChartPreview();}
+function updateChartDataHint(){const hints={bar:'Label, Value per row',line:'Label, Value per row',scatter:'X, Y per row',pie:'Label, Value per row',radar:'Label, Value per row'};document.getElementById('chartDataHint').textContent='\u2014 '+hints[currentChartType];}
+function scheduleChartPreview(){clearTimeout(chartPreviewTimer);chartPreviewTimer=setTimeout(renderChartPreview,300);}
+function renderChartPreview(){const canvas=document.getElementById('chartCanvas'),ctx=canvas.getContext('2d');if(chartInstance){chartInstance.destroy();chartInstance=null;}const rawData=document.getElementById('chartData').value.trim();if(!rawData){ctx.clearRect(0,0,canvas.width,canvas.height);return;}const lines=rawData.split('\n').filter(l=>l.trim()&&l.includes(','));const labels=[],values=[],scatterData=[];lines.forEach(line=>{const parts=line.split(',');if(parts.length>=2){labels.push(parts[0].trim());const v=parseFloat(parts[1].trim());values.push(isNaN(v)?0:v);scatterData.push({x:parseFloat(parts[0].trim())||0,y:isNaN(v)?0:v});}});const gray=document.getElementById('chartGrayscale').checked;const legend=document.getElementById('chartShowLegend').checked;const fill=document.getElementById('chartFill').checked;const title=document.getElementById('chartTitle').value.trim();const xLabel=document.getElementById('chartXLabel').value.trim();const yLabel=document.getElementById('chartYLabel').value.trim();const palette=gray?['#222','#444','#666','#888','#aaa','#bbb']:['#15d3f9','#d079fb','#fa4ce6','#4ca6fa','#79fbcf','#f9d715'];const sc=gray?'#444':'#15d3f9',sb=gray?'#222':'#0a9fb8';const FONT={family:"'Times New Roman', serif",size:10};const datasets=(currentChartType==='pie'||currentChartType==='radar')?[{label:title||'Data',data:values,backgroundColor:palette.slice(0,values.length).map(c=>c+'cc'),borderColor:palette.slice(0,values.length),borderWidth:1.5}]:[{label:title||'Data',data:currentChartType==='scatter'?scatterData:values,backgroundColor:sc+'55',borderColor:sb,borderWidth:1.5,fill:fill&&currentChartType==='line',pointRadius:currentChartType==='scatter'?4:3,tension:0.3}];const scales=currentChartType!=='pie'&&currentChartType!=='radar'?{x:{title:{display:!!xLabel,text:xLabel,font:FONT},ticks:{font:FONT},grid:{color:gray?'#ddd':'#e8f7fc'}},y:{title:{display:!!yLabel,text:yLabel,font:FONT},ticks:{font:FONT},grid:{color:gray?'#ddd':'#e8f7fc'}}}:undefined;try{chartInstance=new Chart(ctx,{type:currentChartType,data:{labels:currentChartType!=='scatter'?labels:undefined,datasets},options:{responsive:false,animation:false,plugins:{title:{display:!!title,text:title,font:{...FONT,size:11},color:'#0a0a0a'},legend:{display:legend,labels:{font:FONT,color:'#0a0a0a'}}},scales}});}catch(e){console.warn(e);}}
+function insertChart(){if(!chartInstance){toast('Preview a chart first.','err');return;}doInsertFigSrc(document.getElementById('chartCanvas').toDataURL('image/png',1.0),document.getElementById('chartCaption').value.trim()||'Chart.','100%');closeModal('chartModal');}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+document.querySelectorAll('.modal-ov').forEach(ov=>{ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});});
+
+function exportPDF(){toast('Opening print dialog \u2014 choose \u201CSave as PDF\u201D','inf');setTimeout(()=>window.print(),600);}
+function exportHTML(){const state={theme:document.documentElement.getAttribute('data-theme'),refs:S.refs,figs:S.figs,keywords:[...keywords]};let html=document.documentElement.outerHTML;const inject=`<script>window.__SAVED_STATE__=${JSON.stringify(state)}<\/script>`;html=html.replace('</body>',inject+'</body>');const blob=new Blob([html],{type:'text/html'}),url=URL.createObjectURL(blob);const a=document.createElement('a'),title=document.getElementById('paperTitle').value||'ieee-paper';a.href=url;a.download=title.toLowerCase().replace(/\s+/g,'-').slice(0,40)+'.html';a.click();URL.revokeObjectURL(url);toast('Paper saved!');}
+function copyRefs(){if(!S.refs.length){toast('No references to copy.','inf');return;}const text=S.refs.map((ref,i)=>`[${i+1}] ${fmtRefStr(ref.type,ref.authors,ref.title,ref,ref.year,ref.doi).replace(/<\/?em>/g,'')}`).join('\n\n');navigator.clipboard.writeText(text).then(()=>toast('References copied!')).catch(()=>toast('Copy failed.','err'));}
+function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+function toast(msg,type=''){const c=document.getElementById('toasts'),t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;c.appendChild(t);requestAnimationFrame(()=>{t.classList.add('show');setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},3200);});}
+</script>
+</body>
+</html>
