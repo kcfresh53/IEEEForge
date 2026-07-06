@@ -317,12 +317,14 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
 /* ── EQUATION ──
    Centered equation with the number directly BELOW it (centered).
    KaTeX's display margins are removed so the box hugs the math. */
-.ieee-eq{display:flex;flex-direction:column;align-items:center;gap:2px;margin:6pt 0;break-inside:avoid;-webkit-column-break-inside:avoid}
-.ieee-eq-content{text-align:center;min-width:0}
+/* IEEE standard: equation centered across the column, number flush RIGHT
+   and vertically centered on the same line (not below). */
+.ieee-eq{position:relative;display:block;text-align:center;margin:6pt 0;padding-right:2.4em;break-inside:avoid;-webkit-column-break-inside:avoid}
+.ieee-eq-content{display:inline-block;text-align:center;min-width:0;vertical-align:middle}
 .ieee-eq-content .katex-display{margin:0;padding:0}
 .ieee-eq-content .katex-display>.katex{text-align:center}
 .ieee-eq-content .katex{font-size:1.05em}
-.ieee-eq-num{font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;white-space:nowrap}
+.ieee-eq-num{position:absolute;right:0;top:50%;transform:translateY(-50%);font-family:'Times New Roman',Times,serif;font-size:10pt;color:#000;white-space:nowrap}
 
 /* ── REFERENCES ──
    Heading: Heading5 style = small-caps, bold, centered, unnumbered.
@@ -509,8 +511,8 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
   <button class="tb-btn" onclick="toggleSidebar()" data-tip="Toggle outline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg></button>
   <div class="tb-div"></div>
   <div class="tb-group">
-    <button class="tb-btn" data-tip="Undo (Ctrl+Z)" onmousedown="event.preventDefault()" onclick="doUndo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 7"/></svg></button>
-    <button class="tb-btn" data-tip="Redo (Ctrl+Y)" onmousedown="event.preventDefault()" onclick="doRedo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-3-7.7L21 7"/></svg></button>
+    <button class="tb-btn" data-tip="Undo (Ctrl+Z)" onmousedown="event.preventDefault()" onclick="doUndo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12.1525C3 17.0389 7.02944 21 12 21C16.9706 21 21 17.0389 21 12.1525C21 7.26622 17 3.30508 12 3.30508C6 3.30508 3 8.22034 3 8.22034M3 8.22034L3 3M3 8.22034H7.6551"/></svg></button>
+    <button class="tb-btn" data-tip="Redo (Ctrl+Y)" onmousedown="event.preventDefault()" onclick="doRedo()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.1525C21 17.0389 16.9706 21 12 21C7.02944 21 3 17.0389 3 12.1525C3 7.26622 7 3.30508 12 3.30508C18 3.30508 21 8.22034 21 8.22034M21 8.22034L21 3M21 8.22034H16.3449"/></svg></button>
   </div>
   <div class="tb-div"></div>
   <div class="tb-group">
@@ -536,6 +538,8 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
     <button class="tb-btn" onclick="insertHeading(4)" data-tip="Insert Level 4 — a) italic, inline"><span style="font-style:italic;font-size:12px">H4</span></button>
   </div>
   <div class="tb-spacer"></div>
+  <span style="font-size:var(--txs);opacity:.5;white-space:nowrap" id="saveStatus" data-tip="Autosaved locally in this browser"></span>
+  <div class="tb-div"></div>
   <span style="font-size:var(--txs);opacity:.5;white-space:nowrap" id="wcDisplay">0 words</span>
   <div class="tb-div"></div>
   <label class="tgl" data-tip="Toggle dark mode">
@@ -616,6 +620,7 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
       <div class="exp-card"><div class="sb-label">PDF Export</div><p>Exports as IEEE two-column (Times New Roman 10pt body, 8pt refs, 0.75&#8221;/0.625&#8221; margins). Choose <em>Save as PDF</em>.</p><button class="btn-pri full" onclick="exportPDF()">&#128196; Export PDF</button></div>
       <div class="exp-card"><div class="sb-label">Export HTML</div><p>A read-only standalone HTML copy (not re-editable). For sharing a preview &#8212; use a <em>.ief</em> file to keep editing.</p><button class="btn-sec full" onclick="exportHTML()">&#128190; Export HTML</button></div>
       <div class="exp-card"><div class="sb-label">Copy References</div><p>All IEEE-formatted references (appearance order) to clipboard.</p><button class="btn-sec full" onclick="copyRefs()">&#128203; Copy</button></div>
+      <div class="exp-card"><div class="sb-label">Autosave</div><p>Your work is saved automatically in this browser as you type, so closing the tab won&#8217;t lose it. Discard the locally saved draft to start fresh.</p><button class="btn-sec full" onclick="clearAutosave()">&#128465;&#65039; Discard Saved Draft</button></div>
       <div class="exp-card"><div class="sb-label">Stats</div><div class="stats-grid">
         <div class="stat-card"><div class="stat-val" id="xWords">0</div><div class="stat-lbl">Words</div></div>
         <div class="stat-card"><div class="stat-val" id="xRefs">0</div><div class="stat-lbl">Refs</div></div>
@@ -683,6 +688,7 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
       <img id="figPreviewImg" style="max-width:100%;border-radius:var(--rsm);margin-bottom:10px;max-height:200px;object-fit:contain;width:100%">
       <div class="fg"><label class="flbl">Caption (8pt, appears below figure as "Fig. N. Caption")</label><input class="finput" id="figCaption" placeholder="Caption text&#8230;"></div>
       <div class="fg"><label class="flbl">Width</label><select class="finput sel" id="figWidth"><option value="100%">Full column width</option><option value="80%">80% of column</option><option value="60%">60% of column</option><option value="span2">Span both columns (full page width)</option></select></div>
+      <div class="fg"><label class="flbl">Placement</label><select class="finput sel" id="figPlacement"><option value="cursor">At cursor position</option><option value="top">Top of page — under authors (spans both columns)</option></select></div>
     </div>
   </div>
   <div class="modal-foot"><button class="btn-sec" onclick="closeModal('figModal')">Cancel</button><button class="btn-pri" id="insertFigBtn" onclick="insertFig()" disabled>Insert Figure</button></div>
@@ -694,6 +700,8 @@ input,textarea,select,button{font-family:inherit}button{cursor:pointer}a{text-de
     <div class="frow"><div class="fg"><label class="flbl">Rows</label><input class="finput" id="tblRows" type="number" value="3" min="1" max="20"></div><div class="fg"><label class="flbl">Columns</label><input class="finput" id="tblCols" type="number" value="3" min="1" max="10"></div></div>
     <div class="fg"><label class="flbl">Caption (8pt small-caps, appears ABOVE table as "TABLE I.")</label><input class="finput" id="tblCaption" placeholder="Table caption&#8230;"></div>
     <div class="fg"><label class="flbl">Column Headers (comma-separated)</label><input class="finput" id="tblHeaders" placeholder="Method, Accuracy, F1 Score"></div>
+    <div class="fg"><label class="flbl">Width</label><select class="finput sel" id="tblWidth"><option value="single">Single column</option><option value="span2">Span both columns (full page width)</option></select></div>
+    <div class="fg"><label class="flbl">Placement</label><select class="finput sel" id="tblPlacement"><option value="cursor">At cursor position</option><option value="top">Top of page — under authors (spans both columns)</option></select></div>
   </div>
   <div class="modal-foot"><button class="btn-sec" onclick="closeModal('tableModal')">Cancel</button><button class="btn-pri" onclick="insertTable()">Insert Table</button></div>
 </div></div>
@@ -765,6 +773,15 @@ document.addEventListener('paste',e=>{
   const text=(e.clipboardData||window.clipboardData).getData('text/plain')||'';
   document.execCommand('insertText',false,text);
 });
+/* Dragging an image/figure from within the document and dropping it back
+   into a contenteditable region makes the browser move raw <img> nodes,
+   which strips the .ieee-fig wrapper/caption and corrupts formatting.
+   Block internal drags inside the paper sheet, and block any non-file drop
+   landing in the sheet. File drops (handled by the figure modal, which is
+   outside the sheet) are unaffected. */
+document.addEventListener('dragstart',e=>{const t=e.target;if(t&&t.nodeType===1&&t.closest?.('.paper-sheet')&&(t.tagName==='IMG'||t.closest('.ieee-fig'))){e.preventDefault();}},true);
+document.addEventListener('drop',e=>{const inSheet=e.target?.closest?.('.paper-sheet');const noFiles=!e.dataTransfer||!e.dataTransfer.files||e.dataTransfer.files.length===0;if(inSheet&&noFiles){e.preventDefault();e.stopPropagation();}},true);
+document.addEventListener('dragover',e=>{const inSheet=e.target?.closest?.('.paper-sheet');const noFiles=!e.dataTransfer||!e.dataTransfer.files||e.dataTransfer.files.length===0;if(inSheet&&noFiles&&e.dataTransfer&&e.dataTransfer.types&&[...e.dataTransfer.types].some(t=>t==='text/html'||t==='Files')){e.preventDefault();e.dataTransfer.dropEffect='none';}},true);
 function focusEditor(){if(lastEditEl&&document.contains(lastEditEl)){lastEditEl.focus();return true;}const sb=document.querySelector('.sec-body');if(sb){sb.focus();lastEditEl=sb;return true;}return false;}
 function doUndo(){focusEditor();document.execCommand('undo');updateStats();updateCiteNums();}
 function doRedo(){focusEditor();document.execCommand('redo');updateStats();updateCiteNums();}
@@ -772,12 +789,19 @@ function doRedo(){focusEditor();document.execCommand('redo');updateStats();updat
 document.addEventListener('DOMContentLoaded',()=>{
   if(window.__SAVED_STATE__){const ss=window.__SAVED_STATE__;if(ss.theme)document.documentElement.setAttribute('data-theme',ss.theme);if(ss.refs){S.refs=ss.refs;renderRefs();}if(ss.figs){S.figs=ss.figs;renderFigsPanel();}if(ss.keywords)ss.keywords.forEach(k=>keywords.push(k));renderKW();updateCiteNums();}
   {const cb=document.getElementById('themeCb');if(cb)cb.checked=document.documentElement.getAttribute('data-theme')==='dark';}
-  if(!document.querySelector('.paper-section')){['Introduction','Related Work','Methodology','Results and Discussion','Conclusion'].forEach(t=>addSection(t));}
-  else{document.querySelectorAll('.paper-section').forEach(s=>{sectionCount=Math.max(sectionCount,parseInt(s.dataset.sn||0));});}
-  addAuthor();updateOutline();updateStats();updateRefFields();
+  let restored=false;
+  if(!window.__SAVED_STATE__&&hasAutosave()){restored=restoreAutosave();if(restored){docDirty=false;setSaveStatus('Restored');toast('Restored your autosaved draft.','inf');}}
+  if(!restored){
+    if(!document.querySelector('.paper-section')){['Introduction','Related Work','Methodology','Results and Discussion','Conclusion'].forEach(t=>addSection(t));}
+    else{document.querySelectorAll('.paper-section').forEach(s=>{sectionCount=Math.max(sectionCount,parseInt(s.dataset.sn||0));});}
+    addAuthor();
+  }
+  updateOutline();updateStats();updateRefFields();docDirty=false;
   document.addEventListener('selectionchange',onSelChange);
   document.addEventListener('mousedown',e=>{if(!e.target.closest('#inlineTb'))hideInlineTb();});
   document.addEventListener('keydown',globalKeys);
+  document.addEventListener('input',markDirty);
+  window.addEventListener('beforeunload',()=>{if(docDirty)autosaveNow();});
   setInterval(updateStats,3000);
 });
 
@@ -846,6 +870,7 @@ function updateStats(){
   ['statSections','xSecs'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=secs;});
   ['statRefs','xRefs'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=S.refs.length;});
   ['statFigs','xFigs'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent=S.figs.length;});
+  scheduleAutosave();
 }
 function updateAbstractWC(){const c=wc(document.getElementById('abstractEd').innerText);const el=document.getElementById('abstractWC');el.textContent=`${c} / 250 words`;el.style.color=c>250?'var(--accent)':'';}
 
@@ -888,7 +913,10 @@ function renderAtags(){const c=document.getElementById('atagsCont');c.innerHTML=
 function updateRefFields(){const type=document.getElementById('refType').value;document.getElementById('refDynFields').innerHTML=REF_TEMPLATES[type]||'';updateRefPreview();}
 function updateRefPreview(){const type=document.getElementById('refType').value;const authors=S.authorTags.length>0?S.authorTags:['Author'];document.getElementById('refPreview').innerHTML='[n] '+fmtRefStr(type,authors,gv('refTitle')||'Title',collectRefFields(type),gv('refYear')||'Year',gv('refDOI'));}
 function saveRef(){const type=document.getElementById('refType').value,authors=[...S.authorTags];const ai=document.getElementById('atagIn');if(ai?.value.trim())authors.push(ai.value.trim());const title=gv('refTitle'),year=gv('refYear'),doi=gv('refDOI'),fields=collectRefFields(type);if(!title){toast('Please enter a title.','err');return;}if(!authors.length){toast('Please add at least one author.','err');return;}if(S.editRefId){const i=S.refs.findIndex(r=>r.id===S.editRefId);if(i>-1)S.refs[i]={...S.refs[i],type,authors,title,year,doi,...fields};toast('Reference updated!');}else{S.refs.push({id:uid(),type,authors,title,year,doi,...fields});toast('Reference added!');}closeModal('refModal');renderRefs();updateCiteNums();updateStats();}
-function deleteRef(id){S.refs=S.refs.filter(r=>r.id!==id);renderRefs();updateCiteNums();updateStats();toast('Reference removed.','inf');}
+function deleteRef(id){S.refs=S.refs.filter(r=>r.id!==id);renderRefs();updateCiteNums();updateStats();markDirty();toast('Reference removed.','inf');}
+/* Reorder references — because citations are numbered by array position,
+   moving a reference renumbers it and every in-text [n] citation to match. */
+function moveRef(id,dir){const i=S.refs.findIndex(r=>r.id===id);if(i<0)return;const j=dir==='up'?i-1:i+1;if(j<0||j>=S.refs.length)return;[S.refs[i],S.refs[j]]=[S.refs[j],S.refs[i]];renderRefs();updateCiteNums();updateStats();markDirty();hlRef(id);}
 function getRefIdx(id){return S.refs.findIndex(r=>r.id===id)+1;}
 function renderRefs(){
   const list=document.getElementById('refsList'),cards=document.getElementById('refCards');
@@ -897,7 +925,7 @@ function renderRefs(){
   S.refs.forEach((ref,i)=>{
     const num=i+1,fmtd=fmtRefStr(ref.type,ref.authors,ref.title,ref,ref.year,ref.doi);
     const item=document.createElement('div');item.className='ref-item';item.id='rdisp-'+ref.id;item.dataset.rid=ref.id;item.innerHTML=`<span class="ref-num">[${num}]</span><span>${fmtd}</span>`;item.addEventListener('click',()=>hlCites(ref.id));list.appendChild(item);
-    const card=document.createElement('div');card.className='ref-card';card.id='rcard-'+ref.id;const shortAu=ref.authors?.[0]?ref.authors[0]+(ref.authors.length>1?' et al.':''):'&#8212;';card.innerHTML=`<div class="rc-num">[${num}]</div><div class="rc-title">${ref.title}</div><div class="rc-meta">${shortAu} &middot; ${ref.year||'&#8212;'} &middot; ${ref.type}</div><div class="rc-actions"><button class="rc-btn" onclick="insertCiteById('${ref.id}')">Cite</button><button class="rc-btn" onclick="openRefModal('${ref.id}')">Edit</button><button class="rc-btn del" onclick="deleteRef('${ref.id}')">Remove</button></div>`;cards.appendChild(card);
+    const card=document.createElement('div');card.className='ref-card';card.id='rcard-'+ref.id;const shortAu=ref.authors?.[0]?ref.authors[0]+(ref.authors.length>1?' et al.':''):'&#8212;';const upDis=i===0?'disabled style="opacity:.35;cursor:default"':'';const downDis=i===S.refs.length-1?'disabled style="opacity:.35;cursor:default"':'';card.innerHTML=`<div class="rc-num">[${num}]</div><div class="rc-title">${ref.title}</div><div class="rc-meta">${shortAu} &middot; ${ref.year||'&#8212;'} &middot; ${ref.type}</div><div class="rc-actions"><button class="rc-btn" ${upDis} onclick="moveRef('${ref.id}','up')" data-tip="Move up">&#8593;</button><button class="rc-btn" ${downDis} onclick="moveRef('${ref.id}','down')" data-tip="Move down">&#8595;</button><button class="rc-btn" onclick="insertCiteById('${ref.id}')">Cite</button><button class="rc-btn" onclick="openRefModal('${ref.id}')">Edit</button><button class="rc-btn del" onclick="deleteRef('${ref.id}')">Remove</button></div>`;cards.appendChild(card);
   });
 }
 function saveRange(){const sel=window.getSelection();if(sel?.rangeCount>0)S.savedRange=sel.getRangeAt(0).cloneRange();}
@@ -920,12 +948,15 @@ function openFigModal(){saveRange();pendingFigSrc=null;document.getElementById('
 function handleFigFile(e){const f=e.target.files[0];if(f)loadFig(f);}
 function handleFigDrop(e){e.preventDefault();e.currentTarget.classList.remove('drag');const f=e.dataTransfer.files[0];if(f)loadFig(f);}
 function loadFig(file){const r=new FileReader();r.onload=e=>{pendingFigSrc=e.target.result;document.getElementById('figPreviewImg').src=pendingFigSrc;document.getElementById('figPreviewArea').style.display='';document.getElementById('figUpload').style.display='none';document.getElementById('insertFigBtn').disabled=false;};r.readAsDataURL(file);}
-function doInsertFigSrc(src,caption,width){figCount++;const id=uid(),label='Fig. '+figCount;S.figs.push({id,src,caption,num:figCount,label});const span=width==='span2';const cls=span?'ieee-fig span2':'ieee-fig';const w=span?'100%':width;const html=`<div class="${cls}" data-fid="${id}" contenteditable="false" style="width:${w};max-width:100%"><img src="${src}" alt="${label}" style="max-width:100%"><div class="ieee-fig-cap" data-lbl="${label}" contenteditable="true">${caption}</div></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){sel.getRangeAt(0).collapse(true);document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}renderFigsPanel();updateStats();toast(`${label} inserted!`);}
-function insertFig(){if(!pendingFigSrc)return;doInsertFigSrc(pendingFigSrc,document.getElementById('figCaption').value.trim()||'Figure caption.',document.getElementById('figWidth').value);closeModal('figModal');}
+/* Insert a full-width block as the first child of the two-column body so
+   it renders directly under the author block, spanning both columns. */
+function insertAtTop(html){const body=document.querySelector('.paper-body');if(!body)return;const tmp=document.createElement('div');tmp.innerHTML=html;const ref=body.firstChild;[...tmp.childNodes].forEach(n=>body.insertBefore(n,ref));}
+function doInsertFigSrc(src,caption,width,placement='cursor'){figCount++;const id=uid(),label='Fig. '+figCount;S.figs.push({id,src,caption,num:figCount,label});const top=placement==='top';const span=top||width==='span2';const cls=span?'ieee-fig span2':'ieee-fig';const w=span?'100%':width;const html=`<div class="${cls}" data-fid="${id}" contenteditable="false" style="width:${w};max-width:100%"><img src="${src}" alt="${label}" draggable="false" style="max-width:100%"><div class="ieee-fig-cap" data-lbl="${label}" contenteditable="true">${caption}</div></div><br>`;if(top){insertAtTop(html);}else{restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){sel.getRangeAt(0).collapse(true);document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}}renderFigsPanel();updateStats();markDirty();toast(`${label} inserted!`);}
+function insertFig(){if(!pendingFigSrc)return;doInsertFigSrc(pendingFigSrc,document.getElementById('figCaption').value.trim()||'Figure caption.',document.getElementById('figWidth').value,document.getElementById('figPlacement').value);closeModal('figModal');}
 function renderFigsPanel(){const panel=document.getElementById('figCards');panel.innerHTML='';if(!S.figs.length){panel.innerHTML='<div class="empty-st"><div class="empty-st-icon">&#128444;&#65039;</div><div class="empty-st-txt">No figures yet.</div></div>';return;}S.figs.forEach(fig=>{const c=document.createElement('div');c.className='fig-card';c.innerHTML=`<img src="${fig.src}" alt="${fig.label}"><div class="fig-card-b"><div class="fig-card-lbl">${fig.label}</div><div class="fig-card-cap">${fig.caption||'No caption'}</div></div>`;panel.appendChild(c);});}
 
 function openTableModal(){saveRange();openModal('tableModal');}
-function insertTable(){const rows=parseInt(document.getElementById('tblRows').value)||3,cols=parseInt(document.getElementById('tblCols').value)||3;const cap=document.getElementById('tblCaption').value.trim(),hStr=document.getElementById('tblHeaders').value.trim();const headers=hStr?hStr.split(',').map(h=>h.trim()):[];S.tableCount++;const lbl='Table '+toRoman(S.tableCount);const ths=Array.from({length:cols},(_,i)=>`<th contenteditable="true">${headers[i]||'Column '+(i+1)}</th>`).join('');const tds=Array.from({length:cols},()=>'<td contenteditable="true">&#8212;</td>').join('');const trows=Array.from({length:rows},()=>`<tr>${tds}</tr>`).join('');const html=`<div class="ieee-tbl-wrap" contenteditable="false"><div class="ieee-tbl-cap" contenteditable="true">${lbl}${cap?'. '+cap:''}</div><table class="ieee-tbl"><tbody><tr>${ths}</tr>${trows}</tbody></table></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}closeModal('tableModal');toast(`${lbl} inserted!`);}
+function insertTable(){const rows=parseInt(document.getElementById('tblRows').value)||3,cols=parseInt(document.getElementById('tblCols').value)||3;const cap=document.getElementById('tblCaption').value.trim(),hStr=document.getElementById('tblHeaders').value.trim();const headers=hStr?hStr.split(',').map(h=>h.trim()):[];S.tableCount++;const lbl='Table '+toRoman(S.tableCount);const ths=Array.from({length:cols},(_,i)=>`<th contenteditable="true">${headers[i]||'Column '+(i+1)}</th>`).join('');const tds=Array.from({length:cols},()=>'<td contenteditable="true">&#8212;</td>').join('');const trows=Array.from({length:rows},()=>`<tr>${tds}</tr>`).join('');const wsel=document.getElementById('tblWidth')?.value||'single';const psel=document.getElementById('tblPlacement')?.value||'cursor';const top=psel==='top';const span=top||wsel==='span2';const wrapCls=span?'ieee-tbl-wrap span2':'ieee-tbl-wrap';const html=`<div class="${wrapCls}" contenteditable="false"><div class="ieee-tbl-cap" contenteditable="true">${lbl}${cap?'. '+cap:''}</div><table class="ieee-tbl"><tbody><tr>${ths}</tr>${trows}</tbody></table></div><br>`;if(top){insertAtTop(html);}else{restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}}closeModal('tableModal');updateStats();markDirty();toast(`${lbl} inserted!`);}
 
 /* ===== TABLE EDITING (merge / split / add / delete cells) ===== */
 let tblCell=null;
@@ -948,7 +979,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')hideTblTb();});
 
 function openEqModal(){saveRange();document.getElementById('eqInput').value='';document.getElementById('eqPreview').innerHTML='';document.getElementById('eqLabel').value='';openModal('eqModal');}
 function previewEq(){const latex=document.getElementById('eqInput').value.trim(),prev=document.getElementById('eqPreview');if(!latex){prev.innerHTML='';return;}try{prev.innerHTML=window.katex?window.katex.renderToString(latex,{throwOnError:false,displayMode:true}):`<em>${latex}</em>`;}catch(e){prev.innerHTML='<span style="color:var(--accent)">Invalid LaTeX</span>';}}
-function insertEq(){const latex=document.getElementById('eqInput').value.trim();if(!latex)return;S.eqCount++;let rendered=`<em>${latex}</em>`;if(window.katex){try{rendered=window.katex.renderToString(latex,{throwOnError:false,displayMode:true});}catch(e){}}const html=`<div class="ieee-eq" contenteditable="false"><div class="ieee-eq-content">${rendered}</div><div class="ieee-eq-num">(${S.eqCount})</div></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}closeModal('eqModal');toast(`Equation (${S.eqCount}) inserted!`);}
+function insertEq(){const latex=document.getElementById('eqInput').value.trim();if(!latex)return;S.eqCount++;let rendered=`<em>${latex}</em>`;if(window.katex){try{rendered=window.katex.renderToString(latex,{throwOnError:false,displayMode:true});}catch(e){}}const html=`<div class="ieee-eq" contenteditable="false"><div class="ieee-eq-content">${rendered}</div><div class="ieee-eq-num">(${S.eqCount})</div></div><br>`;restoreRange();const sel=window.getSelection();let ok=false;if(sel?.rangeCount>0){const node=sel.getRangeAt(0).commonAncestorContainer;const ed=(node.nodeType===1?node:node.parentElement)?.closest('[contenteditable="true"]');if(ed){document.execCommand('insertHTML',false,html);ok=true;}}if(!ok){const secs=document.querySelectorAll('.sec-body');if(secs.length>0)secs[secs.length-1].innerHTML+=html;}closeModal('eqModal');updateStats();markDirty();toast(`Equation (${S.eqCount}) inserted!`);}
 
 function openChartModal(){saveRange();currentChartType='bar';document.querySelectorAll('.chart-type-btn').forEach(b=>b.classList.remove('on'));document.querySelector('[data-ctype="bar"]').classList.add('on');['chartTitle','chartCaption','chartXLabel','chartYLabel'].forEach(id=>document.getElementById(id).value='');document.getElementById('chartData').value='Category A, 85\nCategory B, 72\nCategory C, 91\nCategory D, 68';document.getElementById('chartGrayscale').checked=false;document.getElementById('chartShowLegend').checked=false;document.getElementById('chartFill').checked=false;updateChartDataHint();openModal('chartModal');setTimeout(renderChartPreview,200);}
 function selectChartType(type,btn){currentChartType=type;document.querySelectorAll('.chart-type-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.getElementById('chartAxisLabels').style.display=(type==='pie')?'none':'';updateChartDataHint();scheduleChartPreview();}
@@ -978,12 +1009,16 @@ function collectProject(){
     title:s.querySelector('.sec-title-in')?.value||'',
     body:s.querySelector('.sec-body')?.innerHTML||''
   }));
+  // Full-width figures/tables placed at the top (under the author block) live
+  // directly in .paper-body before the abstract — capture them separately.
+  let topBlocks='';{const body=document.querySelector('.paper-body');if(body){for(const ch of body.children){if(ch.classList.contains('abstract-wrap'))break;topBlocks+=ch.outerHTML;}}}
   return {format:'IEEEForge',version:IEF_VERSION,savedAt:new Date().toISOString(),
     theme:document.documentElement.getAttribute('data-theme')||'light',
     title:document.getElementById('paperTitle').value||'',
     authors,
     abstract:document.getElementById('abstractEd').innerHTML||'',
     keywords:[...keywords],
+    topBlocks,
     sections,
     refs:S.refs,figs:S.figs,
     counters:{section:sectionCount,table:S.tableCount,eq:S.eqCount,fig:figCount}};
@@ -1006,6 +1041,8 @@ function loadProject(data){
   document.getElementById('authorsList').innerHTML='';(data.authors&&data.authors.length?data.authors:[{}]).forEach(addAuthorWith);
   const ab=document.getElementById('abstractEd');ab.innerHTML=data.abstract||'';updateAbstractWC();
   keywords.length=0;(data.keywords||[]).forEach(k=>keywords.push(k));renderKW();
+  // Clear any old full-width top blocks, then restore saved ones under authors.
+  {const body=document.querySelector('.paper-body');if(body){while(body.firstElementChild&&!body.firstElementChild.classList.contains('abstract-wrap'))body.firstElementChild.remove();if(data.topBlocks)insertAtTop(data.topBlocks);}}
   document.getElementById('sectionsContainer').innerHTML='';sectionCount=0;
   (data.sections||[]).forEach(s=>{const div=addSection('');const ti=div.querySelector('.sec-title-in');if(ti)ti.value=s.title||'';const bd=div.querySelector('.sec-body');if(bd)bd.innerHTML=s.body||'';});
   if(!document.querySelector('.paper-section'))addSection('Introduction');
@@ -1016,6 +1053,20 @@ function loadProject(data){
   updateOutline();updateStats();
   toast('Project opened');
 }
+/* ===== REALTIME AUTOSAVE =====
+   The whole project is persisted locally (debounced) on every edit so an
+   accidental tab/window close never loses work, and is restored on load.
+   Uses localStorage rather than cookies: a paper with embedded figures far
+   exceeds the ~4KB cookie limit, so cookies cannot hold this data. */
+const AUTOSAVE_KEY='ieeeforge_autosave_v1';
+let autosaveTimer=null,autosaveWarned=false,docDirty=false;
+function setSaveStatus(txt){const el=document.getElementById('saveStatus');if(el)el.textContent=txt;}
+function markDirty(){docDirty=true;scheduleAutosave();}
+function scheduleAutosave(){clearTimeout(autosaveTimer);autosaveTimer=setTimeout(autosaveNow,800);}
+function autosaveNow(){if(!docDirty)return;try{localStorage.setItem(AUTOSAVE_KEY,JSON.stringify(collectProject()));docDirty=false;setSaveStatus('Saved '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));autosaveWarned=false;}catch(e){if(!autosaveWarned){autosaveWarned=true;toast('Autosave storage is full — save a .ief file to be safe.','err');}}}
+function hasAutosave(){try{return !!localStorage.getItem(AUTOSAVE_KEY);}catch(e){return false;}}
+function restoreAutosave(){try{const raw=localStorage.getItem(AUTOSAVE_KEY);if(!raw)return false;const data=JSON.parse(raw);if(!data||data.format!=='IEEEForge')return false;loadProject(data);return true;}catch(e){return false;}}
+function clearAutosave(){try{localStorage.removeItem(AUTOSAVE_KEY);}catch(e){}location.reload();}
 function copyRefs(){if(!S.refs.length){toast('No references to copy.','inf');return;}const text=S.refs.map((ref,i)=>`[${i+1}] ${fmtRefStr(ref.type,ref.authors,ref.title,ref,ref.year,ref.doi).replace(/<\/?em>/g,'')}`).join('\n\n');navigator.clipboard.writeText(text).then(()=>toast('References copied!')).catch(()=>toast('Copy failed.','err'));}
 function autoResize(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
 function toast(msg,type=''){const c=document.getElementById('toasts'),t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;c.appendChild(t);requestAnimationFrame(()=>{t.classList.add('show');setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),300);},3200);});}
